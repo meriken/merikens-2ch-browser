@@ -1,6 +1,6 @@
-# merikens-2ch-browser
+# Meriken's 2ch Browser
 
-Meriken's 2ch browser is a dedicated browser for 2ch-compatible online forums such as 2ch.net, 2ch.sc, and open2ch.net.
+Meriken's 2ch Browser is a dedicated browser for 2ch-compatible online forums such as 2ch.net, 2ch.sc, and open2ch.net.
 
 ## Prerequisites
 
