@@ -1,0 +1,1827 @@
+body {
+	z-index: 0;
+	
+	margin:  0;
+	padding: 0;
+	
+	overflow: hidden;
+	
+    color: black;
+    font-family:'Lucida Grande', 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ ProN W3', Meiryo, メイリオ, sans-serif;
+ 	font-size: 14px;
+	
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	
+	cursor: default;
+}
+
+body.simple-layout {
+	padding: 0 12px 12px 12px; 
+	
+	overflow-y: scroll;
+}
+
+body.error {
+	padding-top: 12px;
+}
+
+p {
+	margin: 12px 0 0;
+	padding: 0;
+}
+
+a,
+a:link,
+a:visited,
+a:active,
+a:hover {
+	text-decoration: underline; 
+	color: black;
+	cursor: pointer;
+	
+	display: inline-block;
+	vertical-align: middle;
+	max-width: 100%;
+	text-overflow: ellipsis;
+    overflow: hidden;
+	white-space: nowrap;
+}
+
+#inner-body, 
+h1 {
+	max-width: 632px;
+
+	border-style: solid;
+	border-width: 2px;
+
+	margin-top:    12px;
+	margin-bottom:  0px;
+	margin-right:  auto;
+	margin-left:   auto;
+	
+	-moz-border-radius: 8px;
+	border-radius:      8px;
+
+	padding:    0px 12px 12px;
+	
+	position: relative;
+	overflow: hidden;
+}
+
+h1 {
+    text-align: center;
+    font-size:  16px;
+	border-bottom: 0px;	
+	
+	margin-top: 46px; /* 32 + 2 + 12*/
+	margin-bottom: 0px;
+	padding-top:     4px;
+	padding-bottom:  4px;
+
+	-moz-border-radius: 8px 8px 0 0;
+	border-radius:      8px 8px 0 0;
+}
+
+div#inner-body {
+	margin-top: 0;
+
+	-moz-border-radius: 0 0 8px 8px;
+	border-radius:      0 0 8px 8px;
+}
+
+img {
+	vertical-align: middle;
+}
+
+.hidden {
+	display: none;
+}
+
+:focus {
+	outline: none;
+}
+
+
+
+/*********/
+/* INPUT */
+/*********/
+
+input,
+button,
+textarea {
+	width: auto;
+	
+	margin: 0 0 0 0;
+    border: 2px solid #000000;
+    padding: 3px 12px;
+
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+
+    color: #000000;
+    font-size: 14px;
+    font-family: 'Lucida Grande', 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ ProN W3', Meiryo, メイリオ, sans-serif;
+    text-decoration: none;
+}
+
+textarea {
+    padding: 12px 12px;
+}
+
+input.compact,
+button.compact,
+input[type=text].compact {
+    padding: 0px 6px;
+	margin: 1px 2px; /* TODO: Fix this. */
+	height: 25px;
+}
+
+input.compact,
+input[type=text].compact {
+	height: 21px;
+}
+
+button:active,
+input[type="submit"]:active,
+#login-button:active,
+#registration-button:active {
+    top: 3px;	
+	left: 3px;
+    position: relative;
+}
+
+button.compact:active,
+input[type="submit"].compact:active {
+    top: 2px;	
+	left: 2px;
+    position: relative;
+}
+
+/* to disable the blue highlight border on Chrome */
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+    outline: none;
+}
+
+input[type="text"],
+input[type="password"] {
+    padding: 4px 12px 4px 12px;
+}
+
+button + button {
+	margin-left: 8px;
+}
+
+input[type="checkbox"] {
+    display:none;
+}
+
+input[type="checkbox"] + label {
+	display: inline-block;
+	width: auto;
+
+	border: 2px black solid;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+	
+    padding: 4px 8px 4px 12px;
+
+    color: #000000;
+    font-size: 14px;
+    /* font-family: 'Lucida Grande', 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ ProN W3', Meiryo, メイリオ, sans-serif; */
+    text-decoration: none;
+}
+
+input[type='checkbox'] + label.compact {
+	height: 21px;
+	margin: 1px 2px;
+    padding: 0px 6px;
+}
+
+input[type='checkbox'] + label span {
+    display:inline-block;
+    width:18px;
+    height:8px;
+    margin: 6px 4px 0 0;
+    vertical-align:top;
+    background:url(../img/checkbox-off.png) left top no-repeat;
+    cursor:pointer;
+}
+
+input[type="checkbox"]:checked + label span {
+    background:url(../img/checkbox-on.png) left top no-repeat;
+}
+
+
+
+/************/
+/* PAGE TOP */
+/************/
+
+div#page-top {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 32px;
+	border-style: solid;
+	border-width: 2px;
+	border-top: 0px;
+	border-left: 0px;
+	border-right: 0px;
+	overflow: hidden;
+}
+
+a:link#page-top-app-name,
+a:visited#page-top-app-name,
+a:active#page-top-app-name,
+a:hover#page-top-app-name {
+	height: 100%;
+	float: left;
+	padding: 6px 8px;
+	font-size: 14px;
+	font-weight: bold;
+	text-decoration: none; 
+	color: black;
+}
+
+a.page-top-menu-item,
+a:link.page-top-menu-item,
+a:visited.page-top-menu-item,
+a:active.page-top-menu-item,
+a:hover.page-top-menu-item {
+	height: 100%;
+	float: left;
+	padding: 6px 8px;
+	font-size: 14px;
+	text-decoration: none; 
+	color: black;
+}
+
+a.page-top-user-item,
+a:link.page-top-user-item,
+a:visited.page-top-user-item,
+a:active.page-top-user-item,
+a:hover.page-top-user-item {
+	height: 100%;
+	float: right;
+	overflow: hidden;
+	padding: 6px 8px;
+	font-size: 14px;
+	text-decoration: none; 
+	color: black;
+}
+
+
+
+/**************************/
+/* LOGIN AND REGISTRATION */
+/**************************/
+
+h1.login, 
+#inner-body.login, 
+h1.registration, 
+#inner-body.registration {
+	width: 336px;
+}
+
+#login-email,
+#login-email:hover,
+#registration-username,
+#registration-username:hover {
+    -webkit-border-radius: 5px 5px 0 0;
+    -moz-border-radius:    5px 5px 0 0;
+    border-radius:         5px 5px 0 0;
+	
+    border-bottom: 1px solid black;
+    width: 308px;
+    /* height: 32px; */
+}
+
+#registration-pass,
+#registration-pass:hover,
+#registration-pass1,
+#registration-pass1:hover,
+#registration-email,
+#registration-email:hover,
+#registration-display-name,
+#registration-display-name:hover {
+    -webkit-border-radius: 0;
+    -moz-border-radius:    0;
+    border-radius:         0;
+	
+    margin-top:    0;
+    border-top:    1px solid black;
+    border-bottom: 1px solid black;
+    width: 308px;
+}
+
+#login-password,
+#login-password:hover {
+    -webkit-border-radius: 0 0 5px 5px;
+    -moz-border-radius:    0 0 5px 5px;
+    border-radius:         0 0 5px 5px;
+	
+    margin-top: 0;
+	border-top: 1px solid black;
+    width: 308px;
+}
+
+#registration-username,
+#login-email {
+	margin-top: 12px;
+}
+
+#login-button,
+#registration-button {
+	padding: 8px auto;
+}
+
+#login-last-line {
+	width: 100%;
+	height: 36px;
+	margin-top: 12px;
+	padding: 0;
+}
+
+#login-links {
+	margin-left: 6px;	
+	margin-top: 0;
+	float: left;
+}
+
+#login-register,
+#login-reset-password {
+	line-height: 12px;
+}
+
+#login-button {
+	float: right;
+	margin-top: 4px;
+}
+
+#registration-button {
+	width: 336px;
+
+	border-top: 1px solid black;
+
+    -webkit-border-radius: 0 0 5px 5px;
+    -moz-border-radius:    0 0 5px 5px;
+    border-radius:         0 0 5px 5px;
+}
+
+
+
+/************/
+/* MESSAGES */
+/************/
+
+/* See: http://www.jankoatwarpspeed.com/css-message-boxes-for-different-message-types/ */
+
+div.message-info,
+div.message-info-no-icon,
+div.message-info-right-pane,
+div.message-success, 
+div.message-warning, 
+div.message-error, 
+div.message-error-no-icon,
+div.message-error-right-pane,
+div.message-validation {
+	margin: 12px 0px 0px 0px;
+	padding:15px 10px 15px 50px;
+
+	border: 2px solid;
+    -webkit-border-radius: 5px;
+    -moz-border-radius:    5px;
+    border-radius:         5px;
+
+	background-repeat: no-repeat;
+	background-position: 10px center;
+}
+
+div.message-info-no-icon,
+div.message-error-no-icon {
+	padding: 12px;
+}
+
+div.message-info,
+div.message-info-no-icon,
+div.message-info-right-pane {
+	color: #00529B;
+	background-color: #BDE5F8;
+}
+
+div.message-info,
+div.message-info-right-pane {
+	background-image: url('../img/message-info.png');
+}
+
+div.message-success {
+	color: #4F8A10;
+	background-color: #DFF2BF;
+	background-image:url('../img/message-success.png');
+}
+
+div.message-warning {
+	color: #9F6000;
+	background-color: #FEEFB3;
+	background-image: url('../img/message-warning.png');
+}
+
+div.message-error,
+div.message-error-no-icon,
+div.message-error-right-pane {
+	color: #D8000C;
+	background-color: #FFBABA;
+}
+
+div.message-error,
+div.message-error-right-pane {
+	background-image: url('../img/message-error.png');
+}
+
+div.message-error-right-pane,
+div.message-info-right-pane {
+	padding-top: 12px;
+	padding-bottom: 12px;
+	margin-left:12px;
+	margin-right:12px;
+	margin-bottom:12px;
+	width:400px;
+    font-family:'Lucida Grande', 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ ProN W3', Meiryo, メイリオ, sans-serif;
+ 	font-size: 14px;
+}
+
+div.message-validation {
+	color: #D63301;
+	background-color: #FFCCBA;
+	background-image: url('../img/message-validation.png');
+}
+
+ul.message {
+	padding: 0px;
+	margin:  0px 0px 0px 24px;
+}
+
+
+
+/***************/
+/* SCROLL BARS */
+/***************/
+
+.scrollbar::-webkit-scrollbar {
+	width:  14px;
+	height: 14px;
+} 
+
+
+.scrollbar::-webkit-scrollbar-thumb{
+	border-radius: 8px;
+}
+
+
+
+/*********/
+/* PANES */
+/*********/
+
+div#panes {
+	position: absolute;
+	overflow: hidden !important;
+	top: 0;
+	left: 0;
+	width: 100%;
+	/* margin: 34px 0 0 0; */
+	margin: 0;
+	padding: 0;
+}
+
+div#left-panes-wrapper {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 290px;
+	min-width: 230px;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+div#left-panes {
+	overflow-x: hidden;
+	overflow-y: scroll;
+	width: auto;
+	height: auto;
+	
+	padding: 0;
+	margin: 0;
+	border-right: 2px black solid;
+}
+
+div#right-panes {
+	min-width: 200px;
+	position: absolute;
+	left: 270px;
+	top: 0;
+	margin: 0;
+	padding: 0 0 0 10px;
+}
+
+div#vertical-draggable-area {
+	z-index: 1;
+	height: 100%;
+	width: 10px;
+	content: " ";
+	cursor: move;
+	background-color: transparent;
+	position: absolute;
+}
+
+h2,
+div.left-panes-inner-body,
+div.right-pane-inner-body {
+	border: 2px black solid;	
+	
+	margin-top:    0px;
+	margin-bottom: 0px;
+	margin-right:  auto;
+	margin-left:   auto;
+	
+	-moz-border-radius: 0;
+	border-radius:      0;
+
+	padding:    0px 8px 8px 8px;
+	
+	position: relative;
+	overflow: hidden;
+}
+
+h2,
+.board-name,
+#add-board-tab-button,
+.thread-title,
+#add-thread-tab-button {
+    text-align: center;
+    font-size:  14px;
+	font-weight: bold;
+	border-bottom: 1px black solid;	
+	
+	margin-top: 0px;
+	margin-bottom: 0px;
+	padding-top:     2px;
+	padding-bottom:  2px;
+
+	-moz-border-radius: 0;
+	border-radius:      0;
+}
+
+div.left-panes-inner-body,
+div.right-pane-inner-body {
+	margin-top: 0;
+	margin-bottom: 0;
+	padding: 8px;
+
+	-moz-border-radius: 0;
+	border-radius:      0;
+}
+
+
+
+/* LEFT PANES */
+
+div#left-panes-content > h2,
+div#left-panes-content > div
+{
+	-moz-border-radius: 0;
+	border-radius:      0;
+	
+	border-left: none;
+	border-top: 1px black solid;
+	border-bottom: 1px black solid;
+}
+
+div#left-panes-content > h2:first-child {
+	border-top: none;
+}
+
+div#left-panes-content > div:last-child {
+	border-bottom: none;
+}
+
+.bbs-menu-heading {
+	font-weight: bold;
+	cursor: pointer;
+}
+
+.bbs-menu-item {
+	float: top;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+div.bbs-menu-tools-at-bottom {
+	margin-bottom: 0;
+	padding: 2px 2px;
+
+	border-top: 1px black solid;
+	border-bottom: 1px black solid;
+	border-left: none;
+	border-right: 2px black solid;
+
+	-moz-border-radius: 0;
+	border-radius:      0;
+	
+	overflow: hidden;
+	text-align: center;
+}
+
+div.bbs-menu-tools-at-bottom:last-child {
+	margin-bottom: 0;
+}
+
+div.bubble {
+	display: inline-block; 
+	font-size: 12px; 
+	padding: 0px 6px; 
+	font-weight:bold;
+
+	-moz-border-radius: 4px;
+	border-radius:      4px;
+}
+
+div.bubble.new-posts {
+	margin-left: 4px;
+}
+
+
+
+/* RIGHT PANES */
+
+div#right-panes > h2,
+div#right-panes > div
+{
+	-moz-border-radius: 0;
+	border-radius:      0;
+	
+	border-right: none;
+	border-top: 1px black solid;
+	border-bottom: 1px black solid;
+}
+
+div#right-panes > h2:first-child {
+	border-top: none;
+}
+
+div#right-panes > div:last-child {
+	border-bottom: none;
+}
+
+div#right-panes > div#right-panes-draggable-area {
+	width: 100%;
+	height: 10px;
+	float: top;
+	content: " ";
+	cursor: move;
+	position: absolute;	
+	border: none;
+	border-left: 2px solid black;
+}
+
+div#thread-list-tools-below-board-name,
+div#thread-content-tools-below-thread-title {
+	padding: 2px 4px;
+
+	-moz-border-radius: 0;
+	border-radius:      0;
+	
+	overflow: hidden;
+}
+
+div#thread-list-tools-below-board-name-wrapper,
+div#thread-content-tools-below-thread-title-wrapper,
+div#thread-content-tools-at-bottom-wrapper {
+	overflow: hidden; width: 8192px;
+}
+
+#thread-url-text-field {
+	min-width: 214px;
+	width: 300px;
+}
+
+#board-url-text-field {
+	min-width: 90px;
+	width: 200px;
+}
+
+#thread-search-text-field {
+	width: 160px;
+}
+
+#post-search-text-field {
+	width: 160px;
+}
+
+
+div#star-wrapper-for-favorite-board,
+div#star-wrapper-for-favorite-thread {
+	position: relative;
+	float: left;
+	width: 24px;
+	height: 24px;
+	vertical-align: top;
+	margin-top: 1px;
+	margin-left: 2px;
+	margin-right:4px;
+}
+
+img#gray-star-for-favorite-board,
+img#gray-star-for-favorite-thread,
+img#star-for-favorite-board,
+img#star-for-favorite-thread
+{
+	width: 24px;
+	height: 24px;
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+
+#left-panes-toggle-button {
+	position: absolute;
+	top: 0;
+	width: 12px;
+	margin: 12px 0 12px 0px;
+	padding: 0;
+	left: 270px;
+	-moz-border-radius: 0 8px 8px 0;
+	border-radius:      0 8px 8px 0;
+	border:     2px black solid;
+	border-left: none;
+	z-index: 1;
+}
+
+
+
+/********/
+/* TABS */
+/********/
+
+#board-names,
+#thread-titles {
+	margin-top: 0;
+	border: none;
+	border-left: 1px black solid;
+	height: 27px;
+}
+
+#thread-titles {
+	margin-top: 10px;
+	height: 27px;
+}
+
+#board-names {
+	height: 26px;
+}
+
+.board-name,
+#add-board-tab-button,
+.thread-title,
+#add-thread-tab-button {
+	margin:  0;
+	padding: 2px 12px 2px 12px;
+	
+	height: 22px;
+
+	position: relative;
+	overflow: hidden;
+
+    text-align: center;
+    font-size:  14px;
+	font-weight: bold;
+
+	float: left;
+	
+	border: 1px black solid;
+
+	-moz-border-radius: 0;
+	border-radius:      0;
+	
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+div#right-panes > div#board-names,
+div.board-name,
+#add-board-tab-button {
+	border-top: none;
+}
+
+.board-name,
+.thread-title {
+	padding-right: 26px;
+	padding-left:  8px;
+	min-width: 16px;
+}
+
+.board-name.inactive.
+.thread-title.inactive {
+	font-weight: normal;
+}
+
+#add-board-tab-button,
+#add-thread-tab-button {
+	float: right;
+	width: 16px;
+	margin: 0;
+	border-right: none;
+	/*
+	border-right: none;
+	margin-right: 0;
+	-moz-border-radius: 8px 0 0 0;
+	border-radius:      8px 0 0 0;
+	*/
+}
+
+
+
+/***************/
+/* THREAD LIST */
+/***************/
+
+div#right-panes > div#thread-list {
+	min-height: 16px;
+	border-bottom: 2px black solid;
+	padding: 0;
+	cursor: pointer;	
+	
+	-moz-border-radius: 0 0 0 0;
+	border-radius:      0 0 0 0;
+}
+
+#thread-list-toggle-button {
+	height: 12px;
+	margin: 0;
+	padding: 0;
+	-moz-border-radius: 0 0 8px 8px;
+	border-radius:      0 0 8px 8px;
+	border:     2px black solid;
+	border-top: none;
+}
+
+.new-post-count {
+}
+
+.new-thread {
+	color:red; 
+}
+
+.new-post-count.non-zero {
+	color:red; 
+	font-weight:bold;
+}
+
+
+
+/******************/
+/* THREAD CONTENT */
+/******************/
+
+div#thread-content-wrapper {
+	position: absolute;
+	width: 100%;
+	overflow-x: hidden;
+	overflow-y: hidden;
+	padding: 0 0 12px 0;
+}
+
+div.post-heading {
+	padding-top: 12px;
+	padding-left: 12px;
+	padding-right: 12px;
+}
+
+div#thread-content {
+	height: 400px;
+	min-height:16px;
+	margin: 0;
+	padding: 0;
+	overflow-y: scroll;
+	
+	-khtml-user-select:  text;
+	-moz-user-select:    text; 
+	-webkit-user-select: text; 
+	-ms-user-select:     text; 
+	user-select:         text;
+	
+	cursor: default;
+	
+	font-size: 16px;
+    font-family: 'ＭＳ Ｐゴシック', 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ ProN W3', Meiryo, メイリオ, sans-serif;
+
+	-moz-border-radius: 0;
+	border-radius:      0;
+}
+
+div.id-in-heading-wrapper,
+div.id-in-message-wrapper {
+	display: inline-block; 
+	vertical-align: middle;
+	margin: 1px;
+}
+
+div.id-in-heading,
+div.id-in-heading-label,
+div.id-in-heading-count,
+div.id-in-message,
+div.id-in-message-label,
+div.id-in-message-count,
+div.be-in-heading,
+div.anchor-in-message,
+div.reverse-anchors {
+	color: black; 
+	background-color: white; 
+
+	display: inline-block; 
+	font-family:'Lucida Grande', 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ ProN W3', Meiryo, メイリオ, sans-serif;
+	font-size: 12px; 
+	padding: 0px 6px; 
+	font-weight:normal;
+	vertical-align: middle;
+
+	border: 1px solid black;
+	-moz-border-radius: 4px;
+	border-radius:      4px;
+}
+
+div.id-in-heading-label,
+div.id-in-message-label {
+	border: 1px solid ;
+	-moz-border-radius: 4px 0 0 4px;
+	border-radius:      4px 0 0 4px;
+}
+
+div.id-in-heading,
+div.id-in-message {
+	border: 1px solid;
+	-moz-border-radius: 0 4px 4px 0;
+	border-radius:      0 4px 4px 0;
+}
+
+div.id-in-heading.with-count,
+div.id-in-message.with-count {
+	-moz-border-radius: 0;
+	border-radius:      0;
+}
+
+div.id-in-heading-count,
+div.id-in-message-count {
+	display: none;
+	border: 1px solid;
+	border-left: none;
+	-moz-border-radius: 0 4px 4px 0;
+	border-radius:      0 4px 4px 0;
+}
+
+div.be-in-heading {
+	border: 1px solid;
+}
+
+div.be-in-heading:hover {
+	border: 1px solid;
+}
+
+div.anchor-in-message {
+	border: 1px solid;
+}
+
+div.anchor-in-message {
+	margin: 1px;
+}
+
+div.reverse-anchors {
+	margin: 0;
+	border-top: 2px solid;
+	-moz-border-radius: 0 0 4px 4px;
+	border-radius:      0 0 4px 4px;
+}
+
+div.reverse-anchors-container {
+	width: auto;
+	margin-top: 8px;
+}
+
+div.reverse-anchors-container > div.reverse-anchors {
+	margin: 0;
+}
+
+div#thread-content-tools-at-bottom {
+	padding: 2px 2px;
+
+	border: 2px black solid;
+	border-top: none;
+
+	-moz-border-radius: 0 0 8px 8px;
+	border-radius:      0 0 8px 8px;
+	
+	overflow: hidden;
+}
+
+div.thread-heading {
+	border-top: 1px black solid;	
+	border-bottom: 1px black solid;	
+	
+	margin:    0px;
+	margin-top: 16px;
+	
+	-moz-border-radius: 0;
+	border-radius:      0;
+
+	padding:    4px 8px 4px 8px;
+	
+	position: relative;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	
+	font-size: 14px;
+	font-family: 'Lucida Grande', 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ ProN W3', Meiryo, メイリオ, sans-serif;
+	font-weight: bold;
+	
+	height: 21px;
+}
+
+div#fixed-thread-heading.thread-heading
+{
+	/* border-bottom: 2px black solid;	*/
+	position: absolute; 
+	left: 0; 
+	top: 0; 
+}
+
+div.thread-heading:first-child,
+div#fixed-thread-heading.thread-heading {
+	border-top: none;	
+	margin-top: 0;
+}
+
+.thumbnail-wrapper,
+.youtube-thumbnail {
+	position: relative;
+	display: inline-block;
+	border: 2px gray solid;
+	background: white;
+	margin: 2px 2px 0 0;
+	align: left;
+	overflow: hidden;
+}
+
+img.thumbnail {
+	position: absolute;
+}
+
+.new-post-index {
+	color:red; 
+	font-weight:bold;
+}
+
+.highlighted {
+	background-color: yellow;
+}
+
+.aborn {
+	display: none;
+}
+
+#floating-posts {
+	font-size: 12px;
+}
+
+.popup-menu {
+	font-size: 14px;
+
+	position: absolute;
+	border: 2px solid black;
+	z-index: 3;
+	padding: 7px;
+	
+	-moz-border-radius: 8px;
+	border-radius:      8px;
+}
+
+.popup-menu-item {
+	padding: 0px 0;
+}
+
+.popup-menu-item.divider {
+	padding: 6px 0 2px;
+	border-top: 1px #3165BB solid;
+	margin-top: 4px;
+}
+
+.popup-menu-divider {
+	padding: 0;
+	border-top: 1px #3165BB solid;
+	margin: 4px 0;
+	content: "";
+}
+
+
+
+/********/
+/* POST */
+/********/
+
+#popup-window-title {
+	display: block;
+	margin: 12px 0 0 0;
+	padding: 5px 12px;
+	border: 2px solid #000000;
+	border-bottom: 1px solid #000000;
+	width: 360px;
+	-webkit-border-radius: 5px 5px 0 0;
+	-moz-border-radius: 5px 5px 0 0;
+	border-radius: 5px 5px 0 0;
+	color: #000000;
+	font-size: 14px;
+	text-decoration: none;
+	text-align: center;
+	font-weight: bold;
+}
+
+#post-page-thread-title,
+#post-page-handle,
+#post-page-email {
+	display: block;
+	
+	margin: 0 0 0 0;
+
+    border: 2px solid #000000;
+	border-top:    1px solid #000000;
+	border-bottom: 1px solid #000000;
+
+	width: 360px;
+	
+    -webkit-border-radius: 0;
+    -moz-border-radius:    0;
+    border-radius:         0;
+}
+
+textarea#post-page-message {
+	/* http://stackoverflow.com/questions/3453959/how-do-i-fix-inconsistent-textarea-bottom-margin-in-firefox-and-chrome */
+	display: block;
+	
+	margin: 0 0 0 0;
+
+    border:        2px solid #000000;
+	border-top:    1px solid #000000;
+	border-bottom: 1px solid #000000;
+
+	width: 360px;
+	height: 200px;
+	
+    -webkit-border-radius: 0;
+    -moz-border-radius:    0;
+    border-radius:         0;
+
+	font-size: 16px;
+    font-family: 'ＭＳ Ｐゴシック', 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ ProN W3', Meiryo, メイリオ, sans-serif;
+}
+
+#popup-window-submit-button {
+	margin: 0 0 0 0;
+
+    border: 2px solid #000000;
+	border-top:    1px solid #000000;
+
+	width: 388px;
+	
+    -webkit-border-radius: 0 0 5px 5px;
+    -moz-border-radius:    0 0 5px 5px;
+    border-radius:         0 0 5px 5px;
+}
+
+div.post-message {
+	padding-left: 28px;
+	padding-right: 12px;
+	padding-bottom: 12px;
+}
+
+div.post-heading + div.post-message {
+	margin-top: 6px;
+}
+
+
+
+/******************/
+/* FLOATING POSTS */
+/******************/
+
+.floating-post {
+	font-size: 14px;
+    font-family: 'ＭＳ Ｐゴシック', 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ ProN W3', Meiryo, メイリオ, sans-serif;
+
+	position: absolute;
+	border: 2px solid black;
+	z-index: 2;
+	padding: 7px;
+	width: 550px;
+
+	-khtml-user-select:  text;
+	-moz-user-select:    text; 
+	-webkit-user-select: text; 
+	-ms-user-select:     text; 
+	user-select:         text;
+	
+	-moz-border-radius: 8px;
+	border-radius:      8px;
+}
+
+.floating-post-heading {
+}
+
+.floating-post-message {
+	padding-top: 2px;
+	padding-left: 5px
+}
+
+.floating-post-message + .floating-post-heading {
+	padding-top: 5px;
+}
+
+/* IMAGE VIEWER */
+
+#image-viewer {
+	position: absolute;
+	z-index: 2;
+}
+
+
+
+/*****************/
+/* POPUP WINDOWS */
+/*****************/
+
+#board-name,
+#allow-new-user-accounts-checkbox-label,
+#save-downloaded-images-checkbox-label,
+#use-image-proxy-checkbox-label,
+#use-p2-to-post-checkbox-label,
+#use-ronin-checkbox-label,
+#p2-email,
+#p2-password,
+#ronin-email,
+#ronin-secret-key {
+	border-top:    1px black solid;
+	border-bottom: 1px black solid;
+
+	-moz-border-radius: 0 0 0px 0px;
+	border-radius:      0 0 0px 0px;
+}
+
+#allow-new-user-accounts-checkbox-label,
+#save-downloaded-images-checkbox-label,
+#use-image-proxy-checkbox-label,
+#use-p2-to-post-checkbox-label,
+#use-ronin-checkbox-label {
+	width: 364px;
+}
+	
+#board-name,
+#p2-email,
+#p2-password,
+#ronin-email,
+#ronin-secret-key {
+	width: 360px;
+}
+
+
+
+/**********/
+/* TABLES */
+/**********/
+
+
+table {
+  background-color: white;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+td {
+	max-width: 100px; text-align: right; padding-right: 10px
+}
+
+/* See: http://salzerdesign.com/test/fixedTable.html */
+
+.fixed-table-container {
+  width: auto;
+  height: 176px;
+  border: none;
+  margin: 0;
+  background-color: white;
+  /* above is decorative or flexible */
+  position: relative; /* could be absolute or relative */
+  padding-top: 26px; /* height of header */
+}
+
+.fixed-table-container-inner {
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: 100%;
+}
+ 
+.header-background {
+  background-color: #D5ECFF;
+  height: 26px; /* height of header */
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+}
+
+.th-inner {
+  position: absolute;
+  top: 0;
+  line-height: 24px; /* height of header minus the width of the border*/
+  text-align: left;
+  /* border-left: 1px solid black; */
+  padding-left: 5px;
+  padding-top: 1px;
+  margin-left: -3px;
+  border-bottom: 2px solid black;
+}
+
+.first .th-inner {
+	border-left: none;
+	padding-left: 6px;
+}
+
+/* for tableSorter headers */
+
+.fixed-table-container.sort-decoration { 
+  overflow-x: hidden;
+  /* min-width: 530px; */ /* enough width to show arrows (530px) */
+}
+.sort-decoration .th-inner {
+  width: 100%;
+}
+
+span.sortArrow {
+  background: url(../img/bg.gif) 0 6px no-repeat transparent;
+  padding: 1px 10px;
+  line-height: 24px;
+}
+
+.tablesorter-headerDesc span.sortArrow {
+  background: url(../img/asc.gif) 0 9px no-repeat transparent;
+}
+.tablesorter-headerAsc span.sortArrow {
+  background: url(../img/desc.gif) 0 9px no-repeat transparent;
+}
+
+
+
+/****************/
+/* SPINNER BARS */
+/****************/
+
+/* http://codepen.io/emgerold/pen/EwCxi */
+
+.ajax-spinner-bars {
+  position:absolute;
+  width:35px;
+  height:35px;
+  left:50%;
+  top:50%;
+  margin: 0;
+  padding: 0;
+}
+
+.ajax-spinner-bars > div {
+  left:0;
+  top:-6px;
+  	position: absolute;
+	width: 2px;
+	height: 8px;
+	background-color: #25363F;
+	opacity: 0.05;
+  -webkit-animation: fadeit 0.8s linear infinite;
+  animation: fadeit 0.8s linear infinite;
+}
+
+.ajax-spinner-bars.red > div {
+	background-color: red;
+}
+
+.ajax-spinner-bars.white > div {
+	background-color: white;
+}
+
+.ajax-spinner-bars > .bar-1 {
+  -webkit-transform: rotate(0deg) translate(0, -12px);
+  -ms-transform: rotate(0deg) translate(0, -12px);
+  transform: rotate(0deg) translate(0, -12px);
+  -webkit-animation-delay:0.05s;
+  animation-delay:0.05s;
+}
+.ajax-spinner-bars > .bar-2 {
+  -webkit-transform: rotate(22.5deg) translate(0, -12px);
+  -ms-transform: rotate(22.5deg) translate(0, -12px);
+  transform: rotate(22.5deg) translate(0, -12px);
+  -webkit-animation-delay:0.1s;
+  animation-delay:0.1s;
+}
+.ajax-spinner-bars > .bar-3 {
+  -webkit-transform: rotate(45deg) translate(0, -12px);
+  -ms-transform: rotate(45deg) translate(0, -12px);
+  transform: rotate(45deg) translate(0, -12px);
+  -webkit-animation-delay:0.15s;
+  animation-delay:0.15s;
+}
+.ajax-spinner-bars > .bar-4 {
+  -webkit-transform: rotate(67.5deg) translate(0, -12px);
+  -ms-transform: rotate(67.5deg) translate(0, -12px);
+  transform: rotate(67.5deg) translate(0, -12px);
+  -webkit-animation-delay:0.2s;
+  animation-delay:0.2s;
+}
+.ajax-spinner-bars > .bar-5 {
+  -webkit-transform: rotate(90deg) translate(0, -12px);
+  -ms-transform: rotate(90deg) translate(0, -12px);
+  transform: rotate(90deg) translate(0, -12px);
+  -webkit-animation-delay:0.25s;
+  animation-delay:0.25s;
+}
+.ajax-spinner-bars > .bar-6 {
+  -webkit-transform: rotate(112.5deg) translate(0, -12px);
+  -ms-transform: rotate(112.5deg) translate(0, -12px);
+  transform: rotate(112.5deg) translate(0, -12px);
+  -webkit-animation-delay:0.3s;
+  animation-delay:0.3s;
+}
+.ajax-spinner-bars > .bar-7 {
+  -webkit-transform: rotate(135deg) translate(0, -12px);
+  -ms-transform: rotate(135deg) translate(0, -12px);
+  transform: rotate(135deg) translate(0, -12px);
+  -webkit-animation-delay:0.35s;
+  animation-delay:0.35s;
+}
+.ajax-spinner-bars > .bar-8 {
+  -webkit-transform: rotate(157.5deg) translate(0, -12px);
+  -ms-transform: rotate(157.5deg) translate(0, -12px);
+  transform: rotate(157.5deg) translate(0, -12px);
+  -webkit-animation-delay:0.4s;
+  animation-delay:0.4s;
+}
+.ajax-spinner-bars > .bar-9 {
+  -webkit-transform: rotate(180deg) translate(0, -12px);
+  -ms-transform: rotate(180deg) translate(0, -12px);
+  transform: rotate(180deg) translate(0, -12px);
+  -webkit-animation-delay:0.45s;
+  animation-delay:0.45s;
+}
+.ajax-spinner-bars > .bar-10 {
+  -webkit-transform: rotate(202.5deg) translate(0, -12px);
+  -ms-transform: rotate(202.5deg) translate(0, -12px);
+  transform: rotate(202.5deg) translate(0, -12px);
+  -webkit-animation-delay:0.5s;
+  animation-delay:0.5s;
+}
+.ajax-spinner-bars > .bar-11 {
+  -webkit-transform: rotate(225deg) translate(0, -12px);
+  -ms-transform: rotate(225deg) translate(0, -12px);
+  transform: rotate(225deg) translate(0, -12px);
+  -webkit-animation-delay:0.55s;
+  animation-delay:0.55s;
+}
+.ajax-spinner-bars > .bar-12 {
+  -webkit-transform: rotate(247.5deg) translate(0, -12px);
+  -ms-transform: rotate(247.5deg) translate(0, -12px);
+  transform: rotate(247.5deg) translate(0, -12px);
+  -webkit-animation-delay:0.6s;
+  animation-delay:0.6s;
+}
+.ajax-spinner-bars> .bar-13 {
+  -webkit-transform: rotate(270deg) translate(0, -12px);
+  -ms-transform: rotate(270deg) translate(0, -12px);
+  transform: rotate(270deg) translate(0, -12px);
+  -webkit-animation-delay:0.65s;
+  animation-delay:0.65s;
+}
+.ajax-spinner-bars > .bar-14 {
+  -webkit-transform: rotate(292.5deg) translate(0, -12px);
+  -ms-transform: rotate(292.5deg) translate(0, -12px);
+  transform: rotate(292.5deg) translate(0, -12px);
+  -webkit-animation-delay:0.7s;
+  animation-delay:0.7s;
+}
+.ajax-spinner-bars > .bar-15 {
+  -webkit-transform: rotate(315deg) translate(0, -12px);
+  -ms-transform: rotate(315deg) translate(0, -12px);
+  transform: rotate(315deg) translate(0, -12px);
+  -webkit-animation-delay:0.75s;
+  animation-delay:0.75s;
+}
+.ajax-spinner-bars> .bar-16 {
+  -webkit-transform: rotate(337.5deg) translate(0, -12px);
+  -ms-transform: rotate(337.5deg) translate(0, -12px);
+  transform: rotate(337.5deg) translate(0, -12px);
+  -webkit-animation-delay:0.8s;
+  animation-delay:0.8s;
+}
+@-webkit-keyframes fadeit{
+	0%{ opacity:1; }
+	100%{ opacity:0;}
+}
+@keyframes fadeit{
+	0%{ opacity:1; }
+	100%{ opacity:0;}
+}
+
+
+
+/*****************************************************************************/
+/* COLOR SCHEME                                                              */
+/*****************************************************************************/
+
+/* http://www.colorzilla.com/gradient-editor/ */
+
+table tbody > tr:nth-child(even) {
+	background-color: white;
+}
+
+a:hover#page-top-app-name,
+a:hover.page-top-menu-item,
+a:hover.page-top-user-item {
+	background: #eff4fc; /* Old browsers */
+	background: -moz-linear-gradient(top,  #ffffff 0%, #eff4fc 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(100%,#eff4fc)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #ffffff 0%,#eff4fc 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #ffffff 0%,#eff4fc 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #ffffff 0%,#eff4fc 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  #ffffff 0%,#eff4fc 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#eff4fc',GradientType=0 ); /* IE6-9 */
+}
+
+div.left-panes-inner-body,
+div.right-pane-inner-body,
+.bbs-menu-item,
+#thread-content,
+input,
+input:hover,
+table tbody > tr:nth-child(2n),
+.tablesorter-headerAsc .tablesorter-header-inner .th-inner, /* .headerSortUp .th-inner, */
+.tablesorter-headerDesc .tablesorter-header-inner .th-inner, /* .headerSortDown .th-inner */ 
+.floating-post,
+.popup-menu,
+.popup-menu-item {
+	background-color: #eff4fc;
+}
+
+input[type=submit],
+button,
+input[type="checkbox"] + label {
+	background: #eff4fc; /* Old browsers */
+	background: -moz-linear-gradient(top,  #eff4fc 0%, #afcdf7 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#eff4fc), color-stop(100%,#afcdf7)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #eff4fc 0%,#afcdf7 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #eff4fc 0%,#afcdf7 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #eff4fc 0%,#afcdf7 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  #eff4fc 0%,#afcdf7 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#eff4fc', endColorstr='#afcdf7',GradientType=0 ); /* IE6-9 */
+}
+
+/*
+.reverse-anchors {
+	background: #dfe8f7;
+}
+*/
+
+h1,
+h2,
+#popup-window-title,
+div#page-top,
+#active-board-name,
+#add-board-tab-button,
+#active-thread-title,
+#add-thread-tab-button,
+#right-panes-draggable-area {
+	background: #dfe8f7; /* Old browsers */	
+	background: -moz-linear-gradient(top,  #dfe8f7 0%, #a5c3ef 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#dfe8f7), color-stop(100%,#a5c3ef)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #dfe8f7 0%,#a5c3ef 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #dfe8f7 0%,#a5c3ef 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #dfe8f7 0%,#a5c3ef 100%); /* IE10+ */
+	background: linear-gradient(to bottom,  #dfe8f7 0%,#a5c3ef 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#dfe8f7', endColorstr='#a5c3ef',GradientType=0 ); /* IE6-9 */
+}
+
+#vertical-draggable-area {
+	background: #dfe8f7; /* Old browsers */	
+	background: -moz-linear-gradient(left,  #dfe8f7 0%, #a5c3ef 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, right top, color-stop(0%,#dfe8f7), color-stop(100%,#a5c3ef)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(left,  #dfe8f7 0%,#a5c3ef 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(left,  #dfe8f7 0%,#a5c3ef 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #dfe8f7 0%,#a5c3ef 100%); /* IE10+ */
+	background: linear-gradient(to right,  #dfe8f7 0%,#a5c3ef 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#dfe8f7', endColorstr='#a5c3ef',GradientType=0 ); /* IE6-9 */
+}
+
+input[type=text],
+input[type=password] {
+   	 background-color: #ffffff;
+}
+
+#inner-body,
+.bbs-menu-item:hover,
+.popup-menu-item:hover,
+.th-inner,
+.tablesorter-header-inner .th-inner,
+table tbody > tr:nth-child(2n):hover,
+table tbody > tr:nth-child(2n+1):hover,
+.thread-heading {
+	background-color: #C7D7F1;
+}
+
+.scrollbar::-webkit-scrollbar-thumb,
+.scrollbar::-webkit-scrollbar-thumb:hover,
+.scrollbar::-webkit-scrollbar-thumb:active {
+	background-color: #C7D7F1;
+	/* border: 2px solid black; */
+}
+
+body.simple-layout,
+div#thread-list-tools-below-board-name,
+div#thread-content-tools-below-thread-title,
+div#thread-content-tools-at-bottom,
+div.bbs-menu-tools-at-bottom {
+	background-color: #BACDED;
+}
+
+.board-name.inactive,
+.thread-title.inactive,
+.thread-heading:hover {
+	background-color: #A8C0EA;
+}
+
+input, 
+input:hover, 
+input[type="checkbox"] + label,
+button,
+textarea,
+div.message-info, 
+div.message-success, 
+div.message-warning, 
+div.message-error, 
+div.message-validation,
+div.mce-tinymce.mce-container.mce-panel > div.mce-container-body.mce-stack-layout,
+#popup-window-title {
+	-moz-box-shadow:    3px 3px 3px #9BB7E6;
+	-webkit-box-shadow: 3px 3px 3px #9BB7E6;
+	box-shadow:         3px 3px 3px #9BB7E6;
+}
+
+/* IE */
+textarea {
+	box-shadow:         3px 3px 3px #9BB7E6;
+}
+
+button:active,
+input[type="submit"]:active {
+	-moz-box-shadow:    none;
+	-webkit-box-shadow: none;
+	box-shadow:         none;
+}
+
+button.compact:active,
+input[type="submit"].compact:active {
+	-moz-box-shadow:    1px 1px 1px #9BB7E6;
+	-webkit-box-shadow: 1px 1px 1px #9BB7E6;
+	box-shadow:         1px 1px 1px #9BB7E6;
+}
+
+.scrollbar::-webkit-scrollbar {
+	background-color: #86A8DF;
+	/* border: 2px solid black; */
+}
+
+body,
+button.inactive {
+	background-color: #4E80D1;
+}
+
+div#page-top, 
+div.login, 
+div.registration, 
+#inner-body, 
+h1,
+h2,
+div#left-panes,
+div.left-panes-inner-body,
+div.right-pane-inner-body,
+.board-name,
+.thread-title,
+#add-board-tab-button,
+#add-thread-tab-button,
+#left-panes-toggle-button {
+	-moz-box-shadow:    5px 5px 5px #3165BB;
+	-webkit-box-shadow: 5px 5px 5px #3165BB;
+	box-shadow:         5px 5px 5px #3165BB;
+}
+
+table tbody > tr:nth-child(2n).archived,
+table tbody > tr:nth-child(2n+1).archived {
+	background-color: #CCC;
+}
+
+table tbody > tr:nth-child(2n).archived:hover,
+table tbody > tr:nth-child(2n+1).archived:hover {
+	background-color: #AAA;
+}
+
+tr.odd.archived:hover,
+tr.even.archived:hover {
+	background-color: #999;
+}
+
+.floating-post,
+.popup-menu {
+	-moz-box-shadow:    3px 3px 10px #000;
+	-webkit-box-shadow: 3px 3px 10px #000;
+	box-shadow:         3px 3px 10px #000;
+}
+
+div.anchor-in-message,
+div.reverse-anchors {
+	color: black; 
+	background-color: #dfe8f7;
+	border-color: #A8C0EA;
+}
+
+div.reverse-anchors-container {
+	border-color: #A8C0EA;
+}
+
+div.id-in-heading-label,
+div.id-in-message-label {
+	color: white;
+	background-color: #86A8DF; 
+	border-color: #86A8DF;
+}
+
+div.id-in-heading,
+div.id-in-message {
+	border-color: #86A8DF;
+}
+
+div.id-in-heading-count,
+div.id-in-message-count {
+	border-color: #86A8DF;
+}
+
+div.be-in-heading {
+	color: white; 
+	background-color: #86A8DF;
+	border-color: #86A8DF;
+}
+
+div.be-in-heading:hover {
+	color: white; 
+	background-color: #4E80D1;
+	border-color: #4E80D1;
+}
+
+div.bubble {
+	color: white; 
+	/* background-color: #C7D7F1; */
+	background-color: #BACDED;
+}
+
+div.bubble.new-threads.non-zero {
+	color: white; 
+	background-color: blue; 
+}
+
+div.bubble.new-posts.non-zero {
+	color: white; 
+	background-color: red; 
+}
+
+div.bubble.new-threads.non-zero:hover {
+	background-color: #0000aa;
+}
+
+div.bubble.new-posts.non-zero:hover {
+	background-color: #aa0000;
+}

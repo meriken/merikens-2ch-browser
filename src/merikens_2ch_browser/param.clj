@@ -1,0 +1,89 @@
+(ns merikens-2ch-browser.param)
+
+
+
+(def app-name "Meriken's 2ch Browser 0.1.25")
+
+(def config-file-path "./merikens-2ch-browser.clj")
+
+(def password-salt-length 128)
+(def username-min-length 6)
+(def username-max-length 20)
+(def email-max-length 128)
+(def display-name-min-length 1)
+(def display-name-max-length 20)
+
+(def table-sorter-threshold 3000)
+
+(def image-thumbnail-ng-src "/img/thumbnail-ng.png")
+(def image-thumbnail-failed-src "/img/thumbnail-failed.png")
+(def image-thumbnail-download-failed-src "/img/thumbnail-download-failed.png")
+(def image-thumbnail-spinner-src "/img/thumbnail-spinner.gif")
+
+(def youtube-thumbnail-width 85)
+(def youtube-thumbnail-height 64)
+
+(def number-of-threads-to-archive 5)
+
+
+
+; The following parameters must not be renamed as they are exposed in merikens-2ch-browser.clj.
+
+(def default-port 50000)
+
+(def number-of-threads-for-web-server 512)
+(def immutant-io-threads 32)
+(def immutant-worker-threads number-of-threads-for-web-server)
+
+(def number-of-threads-for-thread-list 16)
+(def number-of-threads-for-thread-content 48)
+(def number-of-threads-for-new-posts 8)
+
+(def user-agent "Monazilla/1.00")
+
+(def wait-time-for-downloading-subject-txt 120000)
+
+(def default-maximum-count-for-mobile-board  50)
+(def default-maximum-count-for-mobile-thread 20)
+
+(def thumbnail-width 80)
+(def thumbnail-height 80)
+
+(def polling-interval-for-download-manager 100)
+(def default-maximum-number-of-image-downloads 16)
+(def maxinum-number-of-retries-for-image-downloads 40)
+
+(def threshold-for-updating-new-post-counts 3000)
+(def maximum-number-of-image-downloads-for-web-browser 4)
+(def animation-duration-for-image-viewer 400)
+
+(def left-panes
+  [[:account-menu        :open]
+   [:server-info         :open]
+   [:favorite-boards     :open]
+   [:special-menu        :open]
+   [:2ch-net             :closed]
+   [:2ch-sc              :closed]
+   [:open2ch-net         :closed]
+   ; [:machi-bbs          :open]
+   [:image-download-info :open]])
+
+(def download-dat-files-from-2ch-net-and-bbspink-com false)
+(def download-threads-in-html-from-2ch-net-and-bbspink-com true)
+(def download-threads-in-json-from-2ch-net-and-bbspink-com true)
+
+(defn proxy-server
+  [url method]
+  nil)
+
+(def css-pc nil)
+
+(def css-mobile nil)
+
+(def use-net-api        false)
+(def net-api-app-key    "")
+(def net-api-hm-key     "")
+(def net-api-x-2ch-ua   "")
+(def net-api-user-agent "")
+
+(def replacement-patterns-for-message-in-post [])
