@@ -168,24 +168,20 @@
       (db-backup/create-backup :without-images)
       (System/exit 0))
 
-    (and (= (first args) "-convert-h2-database-to-hypersql-database") (= (count args) 1))
+    (and (re-find #"^-convert-([a-z0-9]+)-database-to-([a-z0-9]+)-database$" (first args)) (= (count args) 1))
     (do
-      (db-backup/convert-h2-database-to-hypersql-database)
+      (let [result (re-find #"^-convert-([a-z0-9]+)-database-to-([a-z0-9]+)-database$" (first args))
+            src    (nth result 1)
+            dest   (nth result 2)]
+        (db-backup/convert-database))
       (System/exit 0))
 
-    (and (= (first args) "-convert-hypersql-database-to-h2-database") (= (count args) 1))
+    (and (re-find #"^-convert-([a-z0-9]+)-database-to-([a-z0-9]+)-database-without-images$" (first args)) (= (count args) 1))
     (do
-      (db-backup/convert-hypersql-database-to-h2-database)
-      (System/exit 0))
-
-    (and (= (first args) "-convert-mysql-database-to-hypersql-database") (= (count args) 1))
-    (do
-      (db-backup/convert-mysql-database-to-hypersql-database)
-      (System/exit 0))
-
-    (and (= (first args) "-convert-hypersql-database-to-mysql-database") (= (count args) 1))
-    (do
-      (db-backup/convert-hypersql-database-to-mysql-database)
+      (let [result (re-find #"^-convert-([a-z0-9]+)-database-to-([a-z0-9]+)-database-without-images$" (first args))
+            src    (nth result 1)
+            dest   (nth result 2)]
+        (db-backup/convert-database :without-images))
       (System/exit 0))
 
     (and (= (first args) "-import-rep2-data") (= (count args) 3))

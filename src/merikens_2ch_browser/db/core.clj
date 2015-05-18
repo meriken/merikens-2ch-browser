@@ -1713,8 +1713,24 @@
 
 (defn upgrade-tables
   [db-spec]
-  (schema/create-post-filters-table db-spec)
-  (schema/create-images-extra-info-table db-spec)
-  (schema/create-threads-in-json-table db-spec)
-  (schema/create-indexes db-spec)
-  (update-images-extra-info))
+  (let [{:keys [id blob varchar varchar-ignorecase varchar-ignorecase-unique]} (schema/db-types db-spec)]
+    ; prior to 0.1.25
+    (schema/create-post-filters-table db-spec)
+    (schema/create-images-extra-info-table db-spec)
+    (schema/create-threads-in-json-table db-spec)
+    (schema/create-indexes db-spec)
+    (update-images-extra-info)
+
+    ; 0.1.25
+    (doseq [table-name (list "board_info"
+                             "favorite_boards"
+                             "bookmarks"
+                             "favorite_threads"
+                             "downloads"
+                             "user_settings"
+                             "system_settings"
+                             "thread_info"
+                             "dat_files"
+                             "threads_in_html"
+                             "threads_in_json")]
+      (try (clojure.java.jdbc/execute! schema/db-spec [(str "ALTER TABLE " table-name " ADD COLUMN id " id)]) (catch Throwable t)))))
