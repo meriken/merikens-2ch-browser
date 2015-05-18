@@ -38,7 +38,8 @@
   :plugins
   [[lein-ring "0.8.11"]
    [lein-environ "0.5.0"]
-   [lein-cljsbuild "1.0.5"]]
+   [lein-cljsbuild "1.0.5"]
+   [cider/cider-nrepl "0.8.1"]]
   :url
   "http://example.com/FIXME"
   :profiles
@@ -120,4 +121,4 @@
              "-XX:MaxPermSize=256m"
              "-XX:+UseG1GC"
              "-XX:MaxGCPauseMillis=1000"
-             "-Dfile.encoding=utf-8"]) ; Added by Meriken
+             "-Dfile.encoding=utf-8"])
