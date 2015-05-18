@@ -173,7 +173,7 @@
       (let [result (re-find #"^-convert-([a-z0-9]+)-database-to-([a-z0-9]+)-database$" (first args))
             src    (nth result 1)
             dest   (nth result 2)]
-        (db-backup/convert-database))
+        (db-backup/convert-database src dest))
       (System/exit 0))
 
     (and (re-find #"^-convert-([a-z0-9]+)-database-to-([a-z0-9]+)-database-without-images$" (first args)) (= (count args) 1))
@@ -181,7 +181,7 @@
       (let [result (re-find #"^-convert-([a-z0-9]+)-database-to-([a-z0-9]+)-database-without-images$" (first args))
             src    (nth result 1)
             dest   (nth result 2)]
-        (db-backup/convert-database :without-images))
+        (db-backup/convert-database src dest :without-images))
       (System/exit 0))
 
     (and (= (first args) "-import-rep2-data") (= (count args) 3))

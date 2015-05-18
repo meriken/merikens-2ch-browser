@@ -139,14 +139,15 @@
                        {:commandline-name "hypersql"   :display-name "HyperSQL"   :db-spec schema/hsqldb-db-spec    }
                        {:commandline-name "mysql"      :display-name "MySQL"      :db-spec schema/mysql-db-spec     }
                        {:commandline-name "postgresql" :display-name "PostgreSQL" :db-spec schema/postgresql-db-spec}]
-        src-info      (nth (filter #(= src  (:commandline-name %1)) database-info) 0 (throw (IllegalArgumentException. "Database not found.")))
-        dest-info     (nth (filter #(= dest (:commandline-name %1)) database-info) 0 (throw (IllegalArgumentException. "Database not found.")))]
-
-  (timbre/info "Converting" (:display-name src-info) "database to" (:display-name dest-info) "database...")
-  (if (if (some #{:without-images} rest)
-        (copy-database (:db-spec src-info) (:db-spec dest-info) :without-images)
-        (copy-database (:db-spec src-info) (:db-spec dest-info)))
-    (timbre/info "Converted" (:display-name src-info) "database to" (:display-name dest-info) "database..."))))
+        src-info      (nth (filter #(= src  (:commandline-name %1)) database-info) 0 nil)
+        dest-info     (nth (filter #(= dest (:commandline-name %1)) database-info) 0 nil)]
+    (if (or (nil? src-info) (nil? dest-info))
+      (throw (IllegalArgumentException. "Database not found.")))
+    (timbre/info "Converting" (:display-name src-info) "database to" (:display-name dest-info) "database...")
+    (if (if (some #{:without-images} rest)
+          (copy-database (:db-spec src-info) (:db-spec dest-info) :without-images)
+          (copy-database (:db-spec src-info) (:db-spec dest-info)))
+      (timbre/info "Converted" (:display-name src-info) "database to" (:display-name dest-info) "database..."))))
 
 
 
