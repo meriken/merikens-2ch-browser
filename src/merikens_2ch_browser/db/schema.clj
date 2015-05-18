@@ -44,8 +44,7 @@
                                    ";CACHE_SIZE=262144"
                                    ";LOCK_TIMEOUT=10000"
                                    ";TRACE_LEVEL_FILE=0"
-                                   ";TRACE_LEVEL_SYSTEM_OUT=0"
-                                   )
+                                   ";TRACE_LEVEL_SYSTEM_OUT=0")
                  :user        "sa"
                  :password    ""
                  :make-pool?  true
@@ -167,9 +166,9 @@
         (and (:datasource db-spec)
              (re-find #"^jdbc:postgresql:" (.getJdbcUrl (:datasource db-spec)))))
     {:id                                 "SERIAL PRIMARY KEY"
-     :varchar                            "TEXT"
-     :varchar-ignorecase                 "TEXT"
-     :varchar-ignorecase-unique          "TEXT UNIQUE"
+     :varchar                            "CITEXT"
+     :varchar-ignorecase                 "CITEXT"
+     :varchar-ignorecase-unique          "CITEXT UNIQUE"
      :blob                               "BYTEA"}
 
     :else
