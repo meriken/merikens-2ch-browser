@@ -109,7 +109,7 @@
                     :password    ""
                     :make-pool?  true
                     :naming      {:keys   clojure.string/lower-case
-                                  :fields clojure.string/upper-case}})
+                                  :fields clojure.string/lower-case}})
 
 ; PostgreSQL
 (def postgresql-db-spec {:classname   "org.postgresql.Driver"
@@ -120,7 +120,7 @@
                          :password    ""
                          :make-pool?  true
                          :naming      {:keys   clojure.string/lower-case
-                                       :fields clojure.string/upper-case}})
+                                       :fields clojure.string/lower-case}})
 
 ; default
 (def db-spec        hsqldb-db-spec)
