@@ -178,10 +178,11 @@
   "Checks to see if the database schema is present."
   []
   (try
-    (sql/query db-spec "SELECT * FROM USERS")
+    (sql/query db-spec "SELECT * FROM users")
     true
 
     (catch Throwable t
+      (timbre/info "Database is not initialized:" (str t))
       ; (print-stack-trace t)
       false)))
 
@@ -194,7 +195,8 @@
   (.exists (new java.io.File (str "./" db-name ".hsqldb.properties"))))
 
 
-(defn create-users-table
+
+(defn create-users-table
    [db-spec]
    (let [{:keys [id blob varchar varchar-ignorecase varchar-ignorecase-unique]} (db-types db-spec)]
      (sql/db-do-commands
@@ -261,7 +263,8 @@
         [:subject_txt   varchar]
         [:time_subject_txt_retrieved "TIMESTAMP NULL"]
         [:setting_txt   varchar]))))
-(defn create-thread-info-table
+
+(defn create-thread-info-table
    [db-spec]
    (let [{:keys [id blob varchar varchar-ignorecase varchar-ignorecase-unique]} (db-types db-spec)]
      (sql/db-do-commands
