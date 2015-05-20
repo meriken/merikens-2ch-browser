@@ -84,7 +84,8 @@
    [com.taoensso/timbre "3.2.1"]
    [environ "0.5.0"]
 
-   [com.googlecode.owasp-java-html-sanitizer/owasp-java-html-sanitizer "r239"] ; Added by Meriken
+   [com.googlecode.owasp-java-html-sanitizer/owasp-java-html-sanitizer "r239"
+    :exclusions [com.google.guava/guava com.google.code.findbugs/jsr305]] ; Added by Meriken
    [clj-http "0.9.2"] ; Added by Meriken
    [clj-time "0.7.0"] ; Added by Meriken
    ; [pandect "0.3.4"] ; Added by Meriken
@@ -117,7 +118,7 @@
   :main merikens-2ch-browser.core ; Added by Meriken
   :uberjar-name "merikens-2ch-browser.jar" ; Added by Meriken
   :jvm-opts ["-server"
-             "-Xmx12g"
+             "-Xmx4g"
              "-XX:MaxPermSize=256m"
              "-XX:+UseG1GC"
              "-XX:MaxGCPauseMillis=1000"

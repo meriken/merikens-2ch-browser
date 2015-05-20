@@ -3,6 +3,7 @@
 /bin
 /classes
 /checkouts
+/images
 /merikens-2ch-browser.clj
 /merikens-2ch-browser.hsqldb.tmp
 /.settings

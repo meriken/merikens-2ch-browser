@@ -243,7 +243,6 @@
 (defn api-aborn-posts-get
   []
   (when (check-login)
-    (timbre/debug (type (:time-last-matched (nth (db/get-aborn-posts) 0))))
     (generate-json-response (db/get-aborn-posts))))
 
 (defn api-aborn-posts-post

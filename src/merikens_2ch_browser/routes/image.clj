@@ -151,8 +151,7 @@
           iw (if (> thumbnail-ratio image-ratio) (* thumbnail-height image-ratio) thumbnail-width)
           ih (if (> thumbnail-ratio image-ratio) thumbnail-height (/ thumbnail-width image-ratio))
           ix (if (> thumbnail-ratio image-ratio) (/ (- thumbnail-width iw) 2) 0)
-          iy (if (> thumbnail-ratio image-ratio) 0 (/ (- thumbnail-height ih) 2))
-          ]
+          iy (if (> thumbnail-ratio image-ratio) 0 (/ (- thumbnail-height ih) 2))]
 
       (-> thumbnail
         (.createGraphics)
