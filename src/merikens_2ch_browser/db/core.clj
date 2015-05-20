@@ -1733,4 +1733,6 @@
                              "dat_files"
                              "threads_in_html"
                              "threads_in_json")]
-      (try (clojure.java.jdbc/execute! schema/db-spec [(str "ALTER TABLE " table-name " ADD COLUMN id " id)]) (catch Throwable t)))))
+      (try
+        (clojure.java.jdbc/execute! schema/db-spec [(str "ALTER TABLE " table-name " ADD COLUMN id " (clojure.string/replace id #"PRIMARY KEY" ""))])
+        (catch Throwable t)))))

@@ -133,6 +133,12 @@
 (ns merikens-2ch-browser.db.schema
   (:use korma.core [korma.db :only (create-db default-connection)]))
 
+(when (or (hypersql-database-initialized?)
+          (not (h2-database-initialized?)))
+  (def db-spec hsqldb-db-spec)
+  (default-connection (create-db hsqldb-db-spec))
+  (def backup-db-spec hsqldb-backup-db-spec))
+
 ; H2
 ; (def db-spec h2-db-spec)
 ; (default-connection (create-db h2-db-spec))
@@ -144,7 +150,12 @@
 ; (def backup-db-spec hsqldb-backup-db-spec)
 
 ; MySQL
-; max_allowed_packet = 16M
+; Add the following to my.ini.
+;     [mysqld]
+;     collation-server = utf8_unicode_ci
+;     init-connect='SET NAMES utf8'
+;     character-set-server = utf8
+;     max_allowed_packet = 128M
 (def mysql-db-spec (-> mysql-db-spec
                      (assoc :subname  "//127.0.0.1:3306/merikens_2ch_browser")
                      (assoc :user     "merikens_2ch_browser")

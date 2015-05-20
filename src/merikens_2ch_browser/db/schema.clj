@@ -123,8 +123,8 @@
                                        :fields clojure.string/lower-case}})
 
 ; default
-(def db-spec        hsqldb-db-spec)
-(def backup-db-spec hsqldb-backup-db-spec)
+(def db-spec        h2-db-spec)
+(def backup-db-spec h2-backup-db-spec)
 
 
 

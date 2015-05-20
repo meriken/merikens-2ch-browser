@@ -19,7 +19,7 @@ To build the application, run:
 
 To start an application server, run:
 
-    java -jar target/merikens-2ch-browser.jar
+    java -jar merikens-2ch-browser/merikens-2ch-browser.jar
 
 ## License
 
