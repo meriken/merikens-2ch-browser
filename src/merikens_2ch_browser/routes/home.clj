@@ -149,8 +149,7 @@
 
 (defn api-get-server-info
   []
-  (if (not (check-admin-login))
-    (html [:script "open('/login', '_self');"])
+  (when (check-admin-login)
     (let [runtime (Runtime/getRuntime)
           mb      (* 1024 1024)
           max-memory  (double (/ (.maxMemory runtime) mb))
@@ -259,7 +258,6 @@
                          (if (= (second left-pane) :open)
                            "openServerInfoPanel();"
                            "closeServerInfoPanel();")
-                         "updateServerInfoPanel();"
                          "});"])))
 
               (= (first left-pane) :favorite-boards)
@@ -322,7 +320,6 @@
                      (if (check-admin-login) (compact-javascript-button "設定" "openImageDownloadSettingsWindow();"))]
                     [:script
                      "$(document).ready(function() {"
-                     "updateDownloadStatusPanel();"
                      (if (= (second left-pane) :open)
                        "openDownloadStatusPanel();"
                        "closeDownloadStatusPanel();")

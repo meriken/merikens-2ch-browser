@@ -549,19 +549,21 @@ $(document).ready(function() {
 }); 
 
 var previousLoadFavoriteBoardListRequest = null;
+var previousLoadFavoriteBoardListRequestCount = 0;
 
 function loadFavoriteBoardList(refresh) {
 	if (isFavoriteBoardBeingDragged)
 		return;
 	
-	if (previousLoadFavoriteBoardListRequest) {
+	if (previousLoadFavoriteBoardListRequest
+	    && previousLoadFavoriteBoardListRequestCount >= 2) {
 		// console.log('previousLoadFavoriteBoardListRequest.abort();');
 		previousLoadFavoriteBoardListRequest.abort();
 	}
 	
 	previousLoadFavoriteBoardListRequest = $.ajax({ 
 		url: '/api-get-favorite-board-list' + (refresh ? '?bubbles=1&refresh=1' : ''),
-		async: refresh,
+		async: true,
 		success: function(result){
 			if (!isFavoriteBoardBeingDragged)
 				$('#favorite-board-list').html(result);
@@ -571,18 +573,8 @@ function loadFavoriteBoardList(refresh) {
 			previousLoadFavoriteBoardListRequest = null;
 		}
 	});
+	++previousLoadFavoriteBoardListRequestCount;
 }
-
-function autoloadFavoriteBoardList() {
-	loadFavoriteBoardList(true);
-	setTimeout(autoloadFavoriteBoardList, 60000);
-}
-
-$(document).ready(function() { 
-	loadSpecialMenu();
-	loadFavoriteBoardList(false);
-	autoloadFavoriteBoardList();
-}); 
 
 function openAccountMenu()
 {
@@ -664,8 +656,6 @@ function loadSpecialMenu(counter) {
 			$('#special-menu').html(result);
 		},
 		error:  function(result, textStatus, errorThrown){
-			if (textStatus != "abort")
-				$('#special-menu').html('特別メニューの読み込みに失敗しました。'); 
 		},
 		complete: function(result, textStatus) {
 			setTimeout(function() { loadSpecialMenu(counter + 1); }, (counter <= 0) ? 0 : 10 * 60 * 1000);
@@ -3594,3 +3584,26 @@ function openAbornIDsWindow() {
 					 		   centerPopupWindow(abornIDsWindowWidth, abornIDsWindowHeight) + ", resizable  = no" + ", scrollbars = no");
 	abornIDsWindow.focus();
 }
+
+
+
+////////////////////
+// INITIALIZATION //
+////////////////////
+
+function autoloadFavoriteBoardList() {
+	loadFavoriteBoardList(true);
+	setTimeout(autoloadFavoriteBoardList, 60000);
+}
+
+$(document).ready(function() { 
+	$('#special-menu').html('<p><br><br>' + ajaxSpinnerBars + '</p>');
+	$('#favorite-board-list').html('<p><br><br>' + ajaxSpinnerBars + '</p>');
+	$('#server-info-panel').html('<p><br><br>' + ajaxSpinnerBars + '</p>');
+
+	loadSpecialMenu();
+	loadFavoriteBoardList(false);
+	autoloadFavoriteBoardList();
+	updateServerInfoPanel();
+	updateDownloadStatusPanel();
+}); 

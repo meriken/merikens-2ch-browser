@@ -97,18 +97,16 @@
       [:div.bbs-menu-item
        {:id item-id}
        (try
-         (let [{:keys [new-threads new-posts]} (count-new-posts-and-threads-in-board board-url refresh)
-               new-post-count-class (clojure.string/replace (str "new-post-count-" service "-" board)
-                                                            #"[./]"
-                                                            "_")
-               board-name-class (clojure.string/replace (str "board-name-" service "-" board)
-                                                        #"[./]"
-                                                        "_")]
+         (let [{:keys [new-threads new-posts]} (if bubbles (count-new-posts-and-threads-in-board board-url refresh))
+               new-post-count-class (clojure.string/replace (str "new-post-count-" service "-" board) #"[./]" "_")
+               board-name-class (clojure.string/replace (str "board-name-" service "-" board) #"[./]" "_")]
            (list
              [:div {:class board-name-class
                     :style (str "float:left;"
                                 (if (and bubbles (or (> new-threads 0) (> new-posts 0))) "font-weight:bold;" ""))}
               (escape-html board-name-plus)]
+             (if bubbles
+               (let []
              [:div {:style "float:right;"}
               (if (and bubbles (>= new-threads 0)) [:div {:id new-thread-bubble-id
                                                           :class (str "bubble "
@@ -120,7 +118,7 @@
                                                                       "new-posts "
                                                                       (if (> new-posts 0) "non-zero " "")
                                                                       new-post-count-class)}
-                                                    new-posts])]))
+                                                    new-posts])]))))
          (catch Throwable t
            (escape-html board-name-plus)))]
       [:script
@@ -171,8 +169,7 @@
 (defn api-get-favorite-board-list
   [bubbles refresh]
   ; (timbre/debug "api-get-favorite-board-list")
-  (if (not (check-login))
-    (html [:script "open('/login', '_self');"])
+  (when (check-login)
     (try
       (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
       (increment-http-request-count)
