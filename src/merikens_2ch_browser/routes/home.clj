@@ -436,6 +436,7 @@
    :headers {}})
 
 (defroutes home-routes
+  (GET "/m2b/health-check"[] {:status 200 :body "OK"})
   (GET "/server.cgi/ping" [] (shingetsu-api-ping))
 
   (GET "/" [] (home-page))

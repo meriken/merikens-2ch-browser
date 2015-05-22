@@ -25,7 +25,11 @@
 
 (defn log-request [handler]
   (fn [req]
-    (timbre/debug req)
+    (timbre/debug "Request:"
+           (or (get (:headers req) "cf-connecting-ip"  )
+               (get (:headers req) "x-forwarded-server")
+               (:remote-addr req))
+            (:uri req))
     (handler req)))
 
 (def development-middleware
@@ -33,7 +37,8 @@
    ])
 
 (def production-middleware
-  [; wrap-json-response
+  [; log-request
+   ; wrap-json-response
    ; #(wrap-json-params % {:keywords? true})
    wrap-exceptions
    #(wrap-internal-error % :log (fn [e] (timbre/error e)))
