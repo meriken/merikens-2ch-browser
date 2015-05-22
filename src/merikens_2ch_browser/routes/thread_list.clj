@@ -929,8 +929,7 @@
 (defn api-get-new-post-counts
   [thread-url-list]
   ; (timbre/debug "api-get-new-post-counts:" (count thread-url-list))
-  (if (not (check-login))
-    (ring.util.response/not-found "404 Not Found")
+  (when (check-login)
     (let [threads (map #(split-thread-url %1) (clojure.string/split thread-url-list #"\n"))]
       (update-res-count-for-multiple-threads threads false)
       (html [:script

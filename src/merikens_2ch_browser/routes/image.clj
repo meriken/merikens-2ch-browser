@@ -594,8 +594,7 @@
 
 (defn api-get-download-status
   []
-  (if (not (check-login))
-    (html [:script "open('/login', '_self');"])
+  (when (check-login)
     (try
       (html
         (if (check-admin-login)
