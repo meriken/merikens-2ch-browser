@@ -149,7 +149,8 @@
 
 (defn api-get-server-info
   []
-  (when (check-admin-login)
+  (if (not (check-admin-login))
+    (html [:script "open('/login', '_self');"])
     (let [runtime (Runtime/getRuntime)
           mb      (* 1024 1024)
           max-memory  (double (/ (.maxMemory runtime) mb))
@@ -161,7 +162,7 @@
                           "hsqldb"     "HyperSQL"
                           "mysql"      "MySQL"
                           "postgresql" "PostgreSQL"
-                                       (:subprotocol schema/db-spec))]
+                          (:subprotocol schema/db-spec))]
       (html
         [:div [:div {:style "float:left;"} "メモリ(使用中):"] [:div {:style "float:right;"} (format "%.0fMB" used-memory)]] [:div {:style "clear: both;"}]
         [:div [:div {:style "float:left;"} "メモリ(合計):"　] [:div {:style "float:right;"} (format "%.0fMB" total-memory)]] [:div {:style "clear: both;"}]

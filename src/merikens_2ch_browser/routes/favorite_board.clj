@@ -169,7 +169,8 @@
 (defn api-get-favorite-board-list
   [bubbles refresh]
   ; (timbre/debug "api-get-favorite-board-list")
-  (when (check-login)
+  (if (not (check-login))
+    (html [:script "open('/login', '_self');"])
     (try
       (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
       (increment-http-request-count)

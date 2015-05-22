@@ -814,7 +814,8 @@
 (defn api-get-special-menu-content
   [bubbles refresh]
   ; (timbre/debug "api-get-special-menu-content:" bubbles refresh)
-  (when (check-login)
+  (if (not (check-login))
+    (html [:script "open('/login', '_self');"])
     (try
       (increment-http-request-count)
       (let [result (html
