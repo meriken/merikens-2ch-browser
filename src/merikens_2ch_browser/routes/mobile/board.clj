@@ -55,29 +55,32 @@
 
 
 (defn mobile-thread-list-item-to-html
-  [item board-url bookmark-map refresh]
+  [item
+   board-url
+   bookmark-map
+   _ ; refresh
+   ]
   (let [dat (second (re-find #"^([0-9]+\.(dat|cgi))(<>|,)" item))
-        created (-> dat
-                  (clojure.string/replace #"\.(dat|cgi)$" "")
-                  (Long/parseLong )
-                  (* 1000)
-                  (clj-time.coerce/from-long)
-                  (clj-time.core/to-time-zone (clj-time.core/time-zone-for-offset +9)))
-        time-since-creation (/ (- (clj-time.coerce/to-long (clj-time.core/now)) (clj-time.coerce/to-long created)) 1000)
+        ; created (-> dat
+        ;           (clojure.string/replace #"\.(dat|cgi)$" "")
+        ;           (Long/parseLong )
+        ;           (* 1000)
+        ;           (clj-time.coerce/from-long)
+        ;           (clj-time.core/to-time-zone (clj-time.core/time-zone-for-offset +9)))
+        ; time-since-creation (/ (- (clj-time.coerce/to-long (clj-time.core/now)) (clj-time.coerce/to-long created)) 1000)
         after-dat (clojure.string/replace item #"^[0-9]+\.(dat|cgi)(<>|,)" "")
         res-count (Integer/parseInt (clojure.string/replace (clojure.string/replace after-dat #"^.* ?\(" "") #"\)$" ""))
-        thread-id (random-string 16)
         board-url-parts (re-find #"^http://([a-z0-9.-]+)/(.*)/$" board-url)
         server     (nth board-url-parts 1)
         board      (nth board-url-parts 2)
         board      (if (shingetsu-server? server) (clojure.string/replace board #"_[0-9A-F]+$" "") board)
         thread-no  (clojure.string/replace dat #"\.(dat|cgi)$" "")
         thread-url (create-thread-url server board thread-no)
-        speed      (float (/ res-count (/ time-since-creation 60 60 24)))
+        ; speed      (float (/ res-count (/ time-since-creation 60 60 24)))
         service    (server-to-service server)
-        new-res-count-id (clojure.string/replace (str "new-post-count-" service "-" board "-" thread-no) #"[./]" "_")
-        res-count-id (clojure.string/replace (str "post-count-" service "-" board "-" thread-no) #"[./]" "_")
-        thread-title-class (clojure.string/replace (str "thread-title-" service "-" board "-" thread-no) #"[./]" "_")
+        ; new-res-count-id (clojure.string/replace (str "new-post-count-" service "-" board "-" thread-no) #"[./]" "_")
+        ; res-count-id (clojure.string/replace (str "post-count-" service "-" board "-" thread-no) #"[./]" "_")
+        ; thread-title-class (clojure.string/replace (str "thread-title-" service "-" board "-" thread-no) #"[./]" "_")
         bookmark   (or ((keyword thread-no) bookmark-map)
                        (db/get-bookmark service board thread-no))
         ; thread-info (db/get-thread-info service board thread-no)
@@ -130,12 +133,12 @@
     (try
       (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
       (increment-http-request-count)
-      (let [start-time   (System/nanoTime)
-            {:keys [service server board]} (split-board-url board-url)
+      (let [; start-time   (System/nanoTime)
+            {:keys [service board]} (split-board-url board-url)
             board-info   (db/get-board-info service board)
             body         (get-subject-txt board-url true)
             _            (if (nil? body) (throw (Exception. "Failed to obtain subject.txt.")))
-            subject-txt-time-spent (* (- (System/nanoTime) start-time) 0.000001)
+            ; subject-txt-time-spent (* (- (System/nanoTime) start-time) 0.000001)
             board-name   (:board-name board-info)
             bookmark-map (apply merge (map #(hash-map (keyword (str (:thread-no %1))) (:bookmark %1))
                                            (db/get-bookmark-list-for-board service board)))
@@ -156,7 +159,7 @@
                                   (and (not (:viewed? %1))          (:viewed? %2))      +1
                                   :else                                                 0)
                                items)
-            max-count       (try (Integer/parseInt max-count) (catch Throwable t nil))
+            max-count       (try (Integer/parseInt max-count) (catch Throwable _ nil))
             filtered-items  (if max-count (take max-count sorted-items) sorted-items)
             page-url-base   (str "./mobile-board?board-url=" (to-url-encoded-string board-url))
             select-id       (random-element-id)
@@ -244,8 +247,8 @@
                                               (= service "2ch.net") "[net]"
                                               (= service "open2ch.net") "[op]"))
         board-url (create-board-url server board)
-        item-id (random-element-id)
-        display-name (str board-name " [" service "]")
+        ; item-id (random-element-id)
+        ; display-name (str board-name " [" service "]")
         board-counts-classes (clojure.string/replace (str "favorite-board-counts favorite-board-counts-" service "-" board) #"[./]" "_")]
     (list
       [:li {:data-icon "false"}
@@ -257,7 +260,7 @@
              (let [{:keys [new-threads new-posts]} (count-new-posts-and-threads-in-board board-url refresh)]
                (list [:span {:class (str "ui-li-count favorite-board-list new-threads" (if (= new-threads 0) " zero" ""))} new-threads]
                      [:span {:class (str "ui-li-count favorite-board-list new-posts"   (if (= new-posts   0) " zero" ""))} new-posts  ]))
-             (catch Throwable t nil)))]
+             (catch Throwable _ nil)))]
         (escape-html board-name-plus)]])))
 
 (defn mobile-favorite-boards-page
@@ -286,21 +289,22 @@
 (defn get-board-counts
   [favorite-board refresh]
   (let [{:keys [service board]} favorite-board
-        {:keys [server board-name]} (db/get-board-info service board)
-        board-name (if board-name board-name "(板名未設定)")
-        board-name-plus (str board-name (cond (= service "2ch.sc") "[sc]"
-                                              (= service "2ch.net") "[net]"
-                                              (= service "open2ch.net") "[op]"))
+        {:keys [server]} (db/get-board-info service board)
+        ; board-name (if board-name board-name "(板名未設定)")
+        ; board-name-plus (str board-name (cond (= service "2ch.sc") "[sc]"
+        ;                                       (= service "2ch.net") "[net]"
+        ;                                       (= service "open2ch.net") "[op]"))
         board-url (create-board-url server board)
-        item-id (random-element-id)
-        display-name (str board-name " [" service "]")]
+        ; item-id (random-element-id)
+        ; display-name (str board-name " [" service "]")
+        ]
     (try
       (let [{:keys [new-threads new-posts]} (count-new-posts-and-threads-in-board board-url refresh)]
         {:service    service,
          :board      board,
          :newThreads new-threads,
          :newPosts   new-posts})
-      (catch Throwable t
+      (catch Throwable _
         {:service    service
          :board      board
          :newThreads 0,

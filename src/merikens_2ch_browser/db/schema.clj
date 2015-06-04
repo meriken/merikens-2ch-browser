@@ -30,7 +30,7 @@
             [clojure.stacktrace :refer [print-stack-trace]]
             [taoensso.timbre :refer [log]]
             [merikens-2ch-browser.param :refer :all]
-            [merikens-2ch-browser.interop :refer :all]))
+            [merikens-2ch-browser.cursive :refer :all]))
 
 
 

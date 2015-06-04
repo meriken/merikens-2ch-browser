@@ -29,13 +29,14 @@
   (:require [clojure.java.jdbc :as sql]
             [jdbc.pool.c3p0 :refer [make-datasource-spec]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [taoensso.timbre :as timbre :refer [log]]
+            [taoensso.timbre :refer [log]]
             [clj-time.core]
             [clj-time.coerce]
             [merikens-2ch-browser.db.core :as db]
             [merikens-2ch-browser.db.schema :as schema]
             [merikens-2ch-browser.util :refer :all]
-            [merikens-2ch-browser.param :refer :all]))
+            [merikens-2ch-browser.param :refer :all]
+            [merikens-2ch-browser.cursive :refer :all]))
 
 
 
@@ -71,7 +72,7 @@
 
 (defn copy-table
   [src dest table-name]
-  (timbre/info "Copying" table-name "table...")
+  (log :info "Copying" table-name "table...")
   (let [table-keyword (keyword table-name)
         ids (sql/query src [(str "SELECT id FROM " table-name)] :row-fn :id)
         id-count (count ids)
@@ -93,12 +94,12 @@
           (if-not
             (try
               (process-partition %1)
-              (timbre/info (str "Copying " table-name " table...") (get-progress start-time (min (* %2 partition-size) %3) %3))
+              (log :info (str "Copying " table-name " table...") (get-progress start-time (min (* %2 partition-size) %3) %3))
               true
               (catch java.sql.SQLNonTransientConnectionException _
-                (timbre/info "Recovering from connection error...")
-                (.softResetAllUsers (:datasource src))
-                (.softResetAllUsers (:datasource dest))
+                (log :info "Recovering from connection error...")
+                (java-soft-reset-all-users (:datasource src))
+                (java-soft-reset-all-users (:datasource dest))
                 false))
             (recur)))
         partitioned-ids
@@ -121,7 +122,7 @@
       (schema/create-tables pooled-dest)
       (schema/create-indexes pooled-dest)
 
-      (timbre/info "Upgrading database...")
+      (log :info "Upgrading database...")
       (db/upgrade-tables pooled-src)
 
       (doall (map #(copy-table pooled-src pooled-dest %1) table-list-without-images))
@@ -134,7 +135,7 @@
       true)
 
     (catch Throwable t
-      (timbre/debug "Failed to copy database:" (str t))
+      (log :debug "Failed to copy database:" (str t))
       ; (.printStackTrace t)
       false)))
 
@@ -150,11 +151,11 @@
         dest-info (nth (filter #(= dest (:commandline-name %1)) database-info) 0 nil)]
     (if (or (nil? src-info) (nil? dest-info))
       (throw (IllegalArgumentException. "Database not found.")))
-    (timbre/info "Converting" (:display-name src-info) "database to" (:display-name dest-info) "database...")
+    (log :info "Converting" (:display-name src-info) "database to" (:display-name dest-info) "database...")
     (if (if (some #{:without-images} rest)
           (copy-database (:db-spec src-info) (:db-spec dest-info) :without-images)
           (copy-database (:db-spec src-info) (:db-spec dest-info)))
-      (timbre/info "Converted" (:display-name src-info) "database to" (:display-name dest-info) "database..."))))
+      (log :info "Converted" (:display-name src-info) "database to" (:display-name dest-info) "database..."))))
 
 
 
@@ -164,8 +165,8 @@
 
 (defn create-backup
   [& args]
-  (timbre/info "Creating backup database...")
+  (log :info "Creating backup database...")
   (when (if (some #{:without-images} args)
           (copy-database schema/db-spec schema/backup-db-spec :without-images)
           (copy-database schema/db-spec schema/backup-db-spec))
-    (timbre/info "Created backup database.")))
+    (log :info "Created backup database.")))

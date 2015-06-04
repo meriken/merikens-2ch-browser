@@ -26,9 +26,9 @@
 
 
 (ns merikens-2ch-browser.css
-  (:require [garden.core :refer [css]]
-            [garden.units :refer [px px+]]))
-
+  (:require [garden.core :refer [css]]))
+(ns-unmap 'garden.units 'px+)
+(require '[merikens-2ch-browser.cursive :refer :all])
 
 
 (defn css-background

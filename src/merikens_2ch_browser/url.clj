@@ -27,7 +27,7 @@
 
 (ns merikens-2ch-browser.url
   (:require [merikens-2ch-browser.util :refer :all]
-            [merikens-2ch-browser.interop :refer :all]
+            [merikens-2ch-browser.cursive :refer :all]
             [merikens-2ch-browser.param :refer :all]
             [merikens-2ch-browser.db.core :as db]
             [clojure.stacktrace :refer [print-stack-trace]]

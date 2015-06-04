@@ -35,7 +35,7 @@
             [clj-http.client :as client]
             [taoensso.timbre :as timbre :refer [log]]
             [taoensso.timbre.appenders.rotor :as rotor]
-            [merikens-2ch-browser.interop :refer :all]
+            [merikens-2ch-browser.cursive :refer :all]
             [merikens-2ch-browser.param :refer :all]
             [merikens-2ch-browser.db.core :as db]
             [clojure.math.numeric-tower]

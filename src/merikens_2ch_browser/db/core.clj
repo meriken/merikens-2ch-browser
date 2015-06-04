@@ -25,22 +25,23 @@
 
 
 
-(System/setProperties
-  (doto (java.util.Properties. (System/getProperties))
-    (.put "com.mchange.v2.log.MLog" "com.mchange.v2.log.FallbackMLog")
-    (.put "com.mchange.v2.log.FallbackMLog.DEFAULT_CUTOFF_LEVEL" "OFF")))
+; (System/setProperties
+; (doto (java.util.Properties. (System/getProperties))
+;  (.put "com.mchange.v2.log.MLog" "com.mchange.v2.log.FallbackMLog")
+;  (.put "com.mchange.v2.log.FallbackMLog.DEFAULT_CUTOFF_LEVEL" "OFF")) )
 
 (ns merikens-2ch-browser.db.core
   (:use korma.core
         [korma.db :only (defdb transaction)])
   (:require [clojure.stacktrace :refer [print-stack-trace]]
             [noir.session :as session]
-            [taoensso.timbre :as timbre :refer [log]]
+            [taoensso.timbre :refer [log]]
             [taoensso.nippy :as nippy]
             [clj-time.core]
             [clj-time.coerce]
             [merikens-2ch-browser.db.schema :as schema]
-            [merikens-2ch-browser.param :refer :all]))
+            [merikens-2ch-browser.param :refer :all]
+            [merikens-2ch-browser.cursive :refer :all]))
 
 
 
@@ -51,25 +52,25 @@
   (let [k (keys row) v (vals row)]
     (zipmap k
             (map #(if (and (= (Class/forName "org.postgresql.util.PGobject") (type %1))
-                           (= (.getType %1) "citext"))
-                    (.getValue %1)
-                    %1)
+                           (= (java-pgobject-get-type %1) "citext"))
+                   (java-pgobject-get-value %1)
+                   %1)
                  v))))
 
-(defentity users             (transform convert-citext-into-string))
-(defentity dat_files         (transform convert-citext-into-string))
-(defentity threads_in_html   (transform convert-citext-into-string))
-(defentity threads_in_json   (transform convert-citext-into-string))
-(defentity favorite_threads  (transform convert-citext-into-string))
-(defentity thread_info       (transform convert-citext-into-string))
-(defentity board_info        (transform convert-citext-into-string))
-(defentity bookmarks         (transform convert-citext-into-string))
-(defentity favorite_boards   (transform convert-citext-into-string))
-(defentity images            (transform convert-citext-into-string))
-(defentity downloads         (transform convert-citext-into-string))
-(defentity user_settings     (transform convert-citext-into-string))
-(defentity system_settings   (transform convert-citext-into-string))
-(defentity post_filters      (transform convert-citext-into-string))
+(defentity users (transform convert-citext-into-string))
+(defentity dat_files (transform convert-citext-into-string))
+(defentity threads_in_html (transform convert-citext-into-string))
+(defentity threads_in_json (transform convert-citext-into-string))
+(defentity favorite_threads (transform convert-citext-into-string))
+(defentity thread_info (transform convert-citext-into-string))
+(defentity board_info (transform convert-citext-into-string))
+(defentity bookmarks (transform convert-citext-into-string))
+(defentity favorite_boards (transform convert-citext-into-string))
+(defentity images (transform convert-citext-into-string))
+(defentity downloads (transform convert-citext-into-string))
+(defentity user_settings (transform convert-citext-into-string))
+(defentity system_settings (transform convert-citext-into-string))
+(defentity post_filters (transform convert-citext-into-string))
 (defentity images_extra_info (transform convert-citext-into-string))
 
 
@@ -108,7 +109,7 @@
     (clojure.java.jdbc/db-do-commands schema/db-spec "SHUTDOWN")
 
     (catch Throwable t
-      (timbre/debug "shutdown: Unexpected exception:" (str t)))))
+      (log :debug "shutdown: Unexpected exception:" (str t)))))
 
 (def count-keyword
   (fn [result]
@@ -163,8 +164,8 @@
 (defn get-cookie-store
   []
   (let [user (-> (select users (where {:id (:id (session/get :user))}) (limit 1))
-               (first)
-               (underscore-to-dash-in-keys))]
+                 (first)
+                 (underscore-to-dash-in-keys))]
     (if (:cookie-store user)
       (nippy/thaw (if (byte-array? (:cookie-store user))
                     (:cookie-store user)
@@ -177,11 +178,11 @@
           (set-fields {:cookie_store (nippy/freeze cookie-store)})
           (where {:id (:id (session/get :user))})))
 
-(defn dump-users-table
+(comment defn dump-users-table
   []
-  (timbre/debug (select users)))
+  (log :debug (select users)))
 
-(defn get-all-users
+(comment defn get-all-users
   []
   (map underscore-to-dash-in-keys (select users
                                           (order :id))))
@@ -200,9 +201,9 @@
                                      :service   service
                                      :board     board})
                              (limit 1))
-                   (first)
-                   (underscore-to-dash-in-keys))]
-    ; (timbre/debug dat-file)
+                     (first)
+                     (underscore-to-dash-in-keys))]
+    ; (log :debug dat-file)
     (cond
       (nil? dat-file)
       nil
@@ -223,8 +224,8 @@
                       :service   service
                       :board     board})
               (limit 1))
-    (first)
-    (underscore-to-dash-in-keys)))
+      (first)
+      (underscore-to-dash-in-keys)))
 
 (defn get-dat-file-with-user-id-without-content
   [user-id service board thread-no]
@@ -236,8 +237,8 @@
                       :service   service
                       :board     board})
               (limit 1))
-    (first)
-    (underscore-to-dash-in-keys)))
+      (first)
+      (underscore-to-dash-in-keys)))
 
 (defn add-dat-file
   [dat-file]
@@ -265,7 +266,7 @@
                   :service   service
                   :board     board})))
 
-(defn get-all-dat-files
+(comment defn get-all-dat-files
   []
   (map underscore-to-dash-in-keys (select dat_files)))
 
@@ -283,7 +284,7 @@
                                                   :size
                                                   :res_count
                                                   :source_url)
-                                          (where {:user_id   (:id (session/get :user))}))))
+                                          (where {:user_id (:id (session/get :user))}))))
 
 (defn get-dat-file-list-for-board
   [service board]
@@ -317,8 +318,8 @@
                       :service   service
                       :board     board})
               (limit 1))
-    (first)
-    (underscore-to-dash-in-keys)))
+      (first)
+      (underscore-to-dash-in-keys)))
 
 (defn add-thread-in-html
   [thread-in-html]
@@ -328,8 +329,8 @@
 (defn update-thread-in-html
   [service board thread-no content res-count]
   (update threads_in_html
-          (set-fields {:content       content
-                       :res_count     res-count})
+          (set-fields {:content   content
+                       :res_count res-count})
           (where {:thread_no (prepare-thread-no thread-no)
                   :user_id   (:id (session/get :user))
                   :service   service
@@ -343,9 +344,9 @@
                   :service   service
                   :board     board})))
 
-(defn dump-threads-in-html-table
+(comment defn dump-threads-in-html-table
   []
-  (timbre/debug (select threads_in_html)))
+  (log :debug (select threads_in_html)))
 
 (defn get-all-threads-in-html
   []
@@ -362,7 +363,7 @@
                                                   ; :content
                                                   :res_count
                                                   :source_url)
-                                          (where {:user_id   (:id (session/get :user))}))))
+                                          (where {:user_id (:id (session/get :user))}))))
 
 (defn get-html-file-list-for-board
   [service board]
@@ -393,8 +394,8 @@
                       :service   service
                       :board     board})
               (limit 1))
-    (first)
-    (underscore-to-dash-in-keys)))
+      (first)
+      (underscore-to-dash-in-keys)))
 
 (defn add-thread-in-json
   [thread-in-json]
@@ -404,14 +405,14 @@
 (defn update-thread-in-json
   [service board thread-no content res-count]
   (update threads_in_json
-          (set-fields {:content       content
-                       :res_count     res-count})
+          (set-fields {:content   content
+                       :res_count res-count})
           (where {:thread_no (prepare-thread-no thread-no)
                   :user_id   (:id (session/get :user))
                   :service   service
                   :board     board})))
 
-(defn delete-thread-in-json
+(comment defn delete-thread-in-json
   [service board thread-no]
   (delete threads_in_json
           (where {:thread_no (prepare-thread-no thread-no)
@@ -419,11 +420,11 @@
                   :service   service
                   :board     board})))
 
-(defn dump-threads-in-json-table
+(comment defn dump-threads-in-json-table
   []
-  (timbre/debug (select threads_in_json)))
+  (log :debug (select threads_in_json)))
 
-(defn get-all-threads-in-json
+(comment defn get-all-threads-in-json
   []
   (map underscore-to-dash-in-keys (select threads_in_json)))
 
@@ -438,7 +439,7 @@
                                                   ; :content
                                                   :res_count
                                                   :source_url)
-                                          (where {:user_id   (:id (session/get :user))}))))
+                                          (where {:user_id (:id (session/get :user))}))))
 
 (defn get-json-file-list-for-board
   [service board]
@@ -469,75 +470,75 @@
                                     :service service}))))
       (update board_info
               (set-fields {:board_name board-name})
-              (where {:service   service
-                      :board     board}))
+              (where {:service service
+                      :board   board}))
       (insert board_info
-              (values {:service   service
-                       :server    server
-                       :board     board
+              (values {:service    service
+                       :server     server
+                       :board      board
                        :board_name board-name})))))
 
 (defn update-board-server
   [service server board]
   (transaction
     (if (< 0 (count (select board_info
-                            (where {:board     board
-                                    :service   service}))))
+                            (where {:board   board
+                                    :service service}))))
       (update board_info
               (set-fields {:server server})
-              (where {:service   service
-                      :board     board}))
+              (where {:service service
+                      :board   board}))
       (insert board_info
-              (values {:service   service
-                       :server    server
-                       :board     board})))))
+              (values {:service service
+                       :server  server
+                       :board   board})))))
 
 (defn update-subject-txt
   [service server board subject-txt]
   (transaction
     (if (< 0 (count (select board_info
-                            (where {:board     board
-                                    :service   service}))))
+                            (where {:board   board
+                                    :service service}))))
       (update board_info
-              (set-fields {:subject_txt subject-txt
+              (set-fields {:subject_txt                subject-txt
                            :time_subject_txt_retrieved (clj-time.coerce/to-sql-time (clj-time.core/now))})
-              (where {:service   service
-                      :board     board}))
+              (where {:service service
+                      :board   board}))
       (insert board_info
-              (values {:service   service
-                       :server    server
-                       :board     board
-                       :subject_txt subject-txt
+              (values {:service                    service
+                       :server                     server
+                       :board                      board
+                       :subject_txt                subject-txt
                        :time_subject_txt_retrieved (clj-time.coerce/to-sql-time (clj-time.core/now))})))))
 
 (defn delete-subject-txt
   [service board]
   (transaction
     (if (< 0 (count (select board_info
-                            (where {:board     board
-                                    :service   service}))))
+                            (where {:board   board
+                                    :service service}))))
       (update board_info
-              (set-fields {:subject_txt nil
+              (set-fields {:subject_txt                nil
                            :time_subject_txt_retrieved nil})
-              (where {:service   service
-                      :board     board})))))
+              (where {:service service
+                      :board   board})))))
 
 (defn update-board-server-if-there-is-no-info
   [service server board]
   (transaction
     (if (>= 0 (count (select board_info
-                             (where {:board     board
-                                     :service   service}))))
+                             (where {:board   board
+                                     :service service}))))
       (insert board_info
-              (values {:service   service
-                       :server    server
-                       :board     board})))))
+              (values {:service service
+                       :server  server
+                       :board   board})))))
 
 (defn get-board-info
   [service board]
   (underscore-to-dash-in-keys (first (select board_info
-                                             (where {:board     board
-                                                     :service   service})))))
+                                             (where {:board   board
+                                                     :service service})))))
 
 (defn get-server
   [service board]
@@ -614,7 +615,7 @@
   "Update the number of posts in database for the specified thread
    if and only if res-count is greater than the value in database."
   [service server board thread-no res-count]
-  ; (timbre/debug "update-thread-res-count" service server board thread-no res-count)
+  ; (log :debug "update-thread-res-count" service server board thread-no res-count)
   (if (not (nil? res-count))
     (let [info (nth (select thread_info
                             (where {:thread_no (prepare-thread-no thread-no)
@@ -638,9 +639,9 @@
                         :service   service
                         :board     board}))))))
 
-(defn dump-thread-info-table
+(comment defn dump-thread-info-table
   []
-  (timbre/debug (select thread_info)))
+  (log :debug (select thread_info)))
 
 (defn get-thread-info
   [service board thread-no]
@@ -652,8 +653,8 @@
 (defn get-bookmark-list-for-board
   [service board]
   (map underscore-to-dash-in-keys (select bookmarks
-                                          (where {:board     board
-                                                  :service   service})
+                                          (where {:board   board
+                                                  :service service})
                                           (order :thread_no :DESC)
                                           (limit 3000))))
 
@@ -676,7 +677,7 @@
 
 (defn update-bookmark
   [service board thread-no bookmark]
-  ; (timbre/debug "update-bookmark:" service board thread-no bookmark)
+  ; (log :debug "update-bookmark:" service board thread-no bookmark)
   (transaction
     (if (< 0 (count (select bookmarks
                             (where {:thread_no (prepare-thread-no thread-no)
@@ -686,7 +687,7 @@
       (update bookmarks
               (set-fields {:bookmark bookmark})
               (where {:thread_no (prepare-thread-no thread-no)
-                      :user_id (:id (session/get :user))
+                      :user_id   (:id (session/get :user))
                       :service   service
                       :board     board}))
       (insert bookmarks
@@ -698,7 +699,7 @@
 
 (defn update-bookmark-with-user-id
   [user-id service board thread-no bookmark]
-  ; (timbre/debug "update-bookmark:" service board thread-no bookmark)
+  ; (log :debug "update-bookmark:" service board thread-no bookmark)
   (transaction
     (if (< 0 (count (select bookmarks
                             (where {:thread_no (prepare-thread-no thread-no)
@@ -720,7 +721,7 @@
 
 (defn get-bookmark
   [service board thread-no]
-  ; (timbre/debug "get-bookmark:" service board thread-no)
+  ; (log :debug "get-bookmark:" service board thread-no)
   (:bookmark (first (select bookmarks
                             (where {:thread_no (prepare-thread-no thread-no)
                                     :user_id   (:id (session/get :user))
@@ -732,20 +733,20 @@
   (transaction
     (if (< 0 (count (select bookmarks
                             (where {:thread_no (prepare-thread-no thread-no)
-                                    :user_id (:id (session/get :user))
+                                    :user_id   (:id (session/get :user))
                                     :service   service
                                     :board     board}))))
       (update bookmarks
               (set-fields {:time_last_viewed time-last-viewed})
               (where {:thread_no (prepare-thread-no thread-no)
-                      :user_id (:id (session/get :user))
+                      :user_id   (:id (session/get :user))
                       :service   service
                       :board     board}))
       (insert bookmarks
-              (values {:user_id   (:id (session/get :user))
-                       :service   service
-                       :board     board
-                       :thread_no (prepare-thread-no thread-no)
+              (values {:user_id          (:id (session/get :user))
+                       :service          service
+                       :board            board
+                       :thread_no        (prepare-thread-no thread-no)
                        :time_last_viewed time-last-viewed})))))
 
 (defn update-time-last-viewed-with-user-id
@@ -763,13 +764,13 @@
                       :service   service
                       :board     board}))
       (insert bookmarks
-              (values {:user_id   user-id
-                       :service   service
-                       :board     board
-                       :thread_no (prepare-thread-no thread-no)
+              (values {:user_id          user-id
+                       :service          service
+                       :board            board
+                       :thread_no        (prepare-thread-no thread-no)
                        :time_last_viewed time-last-viewed})))))
 
-(defn get-time-last-viewed
+(comment defn get-time-last-viewed
   [service board thread-no]
   (:time_last_viewed (first (select bookmarks
                                     (where {:thread_no (prepare-thread-no thread-no)
@@ -780,7 +781,7 @@
 (defn get-recently-viewed-threads
   []
   (underscore-to-dash-in-keys (select bookmarks
-                                      (where {:user_id (:id (session/get :user))
+                                      (where {:user_id          (:id (session/get :user))
                                               :time_last_viewed [not= nil]})
                                       (order :time_last_viewed :DESC)
                                       (limit 30))))
@@ -788,7 +789,7 @@
 (defn get-recently-posted-threads
   []
   (underscore-to-dash-in-keys (select bookmarks
-                                      (where {:user_id (:id (session/get :user))
+                                      (where {:user_id          (:id (session/get :user))
                                               :time_last_posted [not= nil]})
                                       (order :time_last_posted :DESC)
                                       (limit 30))))
@@ -798,23 +799,23 @@
   (transaction
     (if (< 0 (count (select bookmarks
                             (where {:thread_no (prepare-thread-no thread-no)
-                                    :user_id (:id (session/get :user))
+                                    :user_id   (:id (session/get :user))
                                     :service   service
                                     :board     board}))))
       (update bookmarks
               (set-fields {:time_last_posted time-last-posted})
               (where {:thread_no (prepare-thread-no thread-no)
-                      :user_id (:id (session/get :user))
+                      :user_id   (:id (session/get :user))
                       :service   service
                       :board     board}))
       (insert bookmarks
-              (values {:user_id   (:id (session/get :user))
-                       :service   service
-                       :board     board
-                       :thread_no (prepare-thread-no thread-no)
+              (values {:user_id          (:id (session/get :user))
+                       :service          service
+                       :board            board
+                       :thread_no        (prepare-thread-no thread-no)
                        :time_last_posted time-last-posted})))))
 
-(defn get-time-last-posted
+(comment defn get-time-last-posted
   [service board thread-no]
   (:time_last_posted (first (select bookmarks
                                     (where {:thread_no (prepare-thread-no thread-no)
@@ -827,20 +828,20 @@
   (transaction
     (if (< 0 (count (select bookmarks
                             (where {:thread_no (prepare-thread-no thread-no)
-                                    :user_id (:id (session/get :user))
+                                    :user_id   (:id (session/get :user))
                                     :service   service
                                     :board     board}))))
       (update bookmarks
               (set-fields {:last_handle last-handle})
               (where {:thread_no (prepare-thread-no thread-no)
-                      :user_id (:id (session/get :user))
+                      :user_id   (:id (session/get :user))
                       :service   service
                       :board     board}))
       (insert bookmarks
-              (values {:user_id   (:id (session/get :user))
-                       :service   service
-                       :board     board
-                       :thread_no (prepare-thread-no thread-no)
+              (values {:user_id     (:id (session/get :user))
+                       :service     service
+                       :board       board
+                       :thread_no   (prepare-thread-no thread-no)
                        :last_handle last-handle})))))
 
 (defn get-last-handle
@@ -856,20 +857,20 @@
   (transaction
     (if (< 0 (count (select bookmarks
                             (where {:thread_no (prepare-thread-no thread-no)
-                                    :user_id (:id (session/get :user))
+                                    :user_id   (:id (session/get :user))
                                     :service   service
                                     :board     board}))))
       (update bookmarks
               (set-fields {:last_email last-email})
               (where {:thread_no (prepare-thread-no thread-no)
-                      :user_id (:id (session/get :user))
+                      :user_id   (:id (session/get :user))
                       :service   service
                       :board     board}))
       (insert bookmarks
-              (values {:user_id   (:id (session/get :user))
-                       :service   service
-                       :board     board
-                       :thread_no (prepare-thread-no thread-no)
+              (values {:user_id    (:id (session/get :user))
+                       :service    service
+                       :board      board
+                       :thread_no  (prepare-thread-no thread-no)
                        :last_email last-email})))))
 
 (defn get-last-email
@@ -885,20 +886,20 @@
   (transaction
     (if (< 0 (count (select bookmarks
                             (where {:thread_no (prepare-thread-no thread-no)
-                                    :user_id (:id (session/get :user))
+                                    :user_id   (:id (session/get :user))
                                     :service   service
                                     :board     board}))))
       (update bookmarks
               (set-fields {:autosaved_draft autosaved-draft})
               (where {:thread_no (prepare-thread-no thread-no)
-                      :user_id (:id (session/get :user))
+                      :user_id   (:id (session/get :user))
                       :service   service
                       :board     board}))
       (insert bookmarks
-              (values {:user_id   (:id (session/get :user))
-                       :service   service
-                       :board     board
-                       :thread_no (prepare-thread-no thread-no)
+              (values {:user_id         (:id (session/get :user))
+                       :service         service
+                       :board           board
+                       :thread_no       (prepare-thread-no thread-no)
                        :autosaved_draft autosaved-draft})))))
 
 (defn get-autosaved-draft
@@ -909,18 +910,18 @@
                                            :service   service
                                            :board     board})))))
 
-(defn update-draft
+(comment defn update-draft
   [service board thread-no draft]
   (transaction
     (if (< 0 (count (select bookmarks
                             (where {:thread_no (prepare-thread-no thread-no)
-                                    :user_id (:id (session/get :user))
+                                    :user_id   (:id (session/get :user))
                                     :service   service
                                     :board     board}))))
       (update bookmarks
               (set-fields {:draft draft})
               (where {:thread_no (prepare-thread-no thread-no)
-                      :user_id (:id (session/get :user))
+                      :user_id   (:id (session/get :user))
                       :service   service
                       :board     board}))
       (insert bookmarks
@@ -928,9 +929,9 @@
                        :service   service
                        :board     board
                        :thread_no (prepare-thread-no thread-no)
-                       :draft draft})))))
+                       :draft     draft})))))
 
-(defn get-draft
+(comment defn get-draft
   [service board thread-no]
   (:draft (first (select bookmarks
                          (where {:thread_no (prepare-thread-no thread-no)
@@ -938,13 +939,13 @@
                                  :service   service
                                  :board     board})))))
 
-(defn get-bookmarks-for-board
+(comment defn get-bookmarks-for-board
   [service board]
   (map underscore-to-dash-in-keys
        (select bookmarks
-               (where {:user_id   (:id (session/get :user))
-                       :service   service
-                       :board     board}))))
+               (where {:user_id (:id (session/get :user))
+                       :service service
+                       :board   board}))))
 
 (defn delete-bookmark
   [service board thread-no]
@@ -954,7 +955,7 @@
                   :service   service
                   :board     board})))
 
-(defn get-all-bookmarks
+(comment defn get-all-bookmarks
   []
   (map underscore-to-dash-in-keys (select bookmarks)))
 
@@ -972,16 +973,16 @@
 (defn get-favorite-board
   [service board]
   (underscore-to-dash-in-keys (first (select favorite_boards
-                                             (where {:user_id   (:id (session/get :user))
-                                                     :service   service
-                                                     :board     board})))))
+                                             (where {:user_id (:id (session/get :user))
+                                                     :service service
+                                                     :board   board})))))
 
 (defn get-favorite-board-with-user-id
   [user-id service board]
   (underscore-to-dash-in-keys (first (select favorite_boards
-                                             (where {:user_id   user-id
-                                                     :service   service
-                                                     :board     board})))))
+                                             (where {:user_id user-id
+                                                     :service service
+                                                     :board   board})))))
 
 (defn add-favorite-board
   [favorite-board]
@@ -993,9 +994,9 @@
 (defn delete-favorite-board
   [service board]
   (delete favorite_boards
-          (where {:user_id   (:id (session/get :user))
-                  :service   service
-                  :board     board})))
+          (where {:user_id (:id (session/get :user))
+                  :service service
+                  :board   board})))
 
 (defn delete-all-favorite-boards
   []
@@ -1051,11 +1052,11 @@
                   :service   service
                   :board     board})))
 
-(defn dump-favorite-threads-table
+(comment defn dump-favorite-threads-table
   []
-  (timbre/debug (select favorite_threads)))
+  (log :debug (select favorite_threads)))
 
-(defn get-all-favorite-threads
+(comment defn get-all-favorite-threads
   []
   (map underscore-to-dash-in-keys (select favorite_threads)))
 
@@ -1065,16 +1066,15 @@
 ; IMAGES ;
 ;;;;;;;;;;
 
-(defn create-standard-md5-string
+(comment defn create-standard-md5-string
   [binary-array]
   (let [hash-string (.toString (BigInteger. 1
-                                                                       (let [m (java.security.MessageDigest/getInstance "MD5")]
-                                                                         (.reset m)
-                                                                         (.update m binary-array)
-                                                                         (.digest m)
-                                                                         ))
-                                                 16)
-        hash-string-length ( count hash-string)]
+                                            (let [m (java.security.MessageDigest/getInstance "MD5")]
+                                              (java-message-digest-reset m)
+                                              (java-message-digest-update m binary-array)
+                                              (java-message-digest-digest m) ))
+                               16)
+        hash-string-length (count hash-string)]
     (str (apply str (repeat (if (< hash-string-length 26) (- 26 hash-string-length) 0) "0"))
          hash-string)))
 
@@ -1086,19 +1086,19 @@
 (defn create-md5-string
   [binary-array]
   (let [digest (let [m (java.security.MessageDigest/getInstance "MD5")]
-                 (.reset m)
-                 (.update m binary-array)
-                 (.digest m))]
+                 (java-message-digest-reset m)
+                 (java-message-digest-update m binary-array)
+                 (java-message-digest-digest m))]
     (apply str (map #(.charAt
-                       "0123456789ABCDEFGHIJKLMNOPQRSTUV"
-                       (bit-and
-                         (bit-shift-right
-                           (bit-or
-                             (bit-shift-left
-                               (nth-unsigned digest (inc (quot (* % 5) 8))) 8)
-                             (nth-unsigned digest (quot (* % 5) 8)))
-                           (rem (* % 5) 8))
-                         31))
+                      "0123456789ABCDEFGHIJKLMNOPQRSTUV"
+                      (bit-and
+                        (bit-shift-right
+                          (bit-or
+                            (bit-shift-left
+                              (nth-unsigned digest (inc (quot (* % 5) 8))) 8)
+                            (nth-unsigned digest (quot (* % 5) 8)))
+                          (rem (* % 5) 8))
+                        31))
                     (range 0 26)))))
 
 (defn get-image-with-url
@@ -1108,8 +1108,8 @@
                                   ;:user_id   (:id (session/get :user))
                                   })
                           (limit 1))
-                (first)
-                (underscore-to-dash-in-keys))]
+                  (first)
+                  (underscore-to-dash-in-keys))]
     (cond
       (nil? image)
       nil
@@ -1121,18 +1121,18 @@
       (let [blob (:content image)
             thumbnail-blob (:thumbnail image)]
         (-> image
-          (assoc :content   (.getBytes blob           1 (int (.length blob))))
-          (assoc :thumbnail (.getBytes thumbnail-blob 1 (int (.length thumbnail-blob)))))))))
+            (assoc :content (.getBytes blob 1 (int (.length blob))))
+            (assoc :thumbnail (.getBytes thumbnail-blob 1 (int (.length thumbnail-blob)))))))))
 
 (defn get-image-with-url-without-content
   [url]
   (let [image (-> (select images
                           (fields :id :user_id :thread_url :url :extension :size :width :height :time_retrieved :thumbnail)
-                          (where {:url url
-                                  :user_id   (:id (session/get :user))})
+                          (where {:url     url
+                                  :user_id (:id (session/get :user))})
                           (limit 1))
-                (first)
-                (underscore-to-dash-in-keys))]
+                  (first)
+                  (underscore-to-dash-in-keys))]
     (cond
       (nil? image)
       nil
@@ -1151,8 +1151,8 @@
               (where {:url     url
                       :user_id (:id (session/get :user))})
               (limit 1))
-    (first)
-    (underscore-to-dash-in-keys)))
+      (first)
+      (underscore-to-dash-in-keys)))
 
 (defn get-image-with-user-id-and-url-without-content-and-thumbnail
   [user-id url]
@@ -1161,17 +1161,17 @@
               (where {:url     url
                       :user_id user-id})
               (limit 1))
-    (first)
-    (underscore-to-dash-in-keys)))
+      (first)
+      (underscore-to-dash-in-keys)))
 
 (defn get-image-with-user-id-and-url
   [user-id url]
   (let [image (-> (select images
-                          (where {:url url
+                          (where {:url     url
                                   :user_id user-id})
                           (limit 1))
-                (first)
-                (underscore-to-dash-in-keys))]
+                  (first)
+                  (underscore-to-dash-in-keys))]
     (cond
       (nil? image)
       nil
@@ -1183,17 +1183,17 @@
       (let [blob (:content image)
             thumbnail-blob (:thumbnail image)]
         (-> image
-          (assoc :content   (.getBytes blob           1 (int (.length blob))))
-          (assoc :thumbnail (.getBytes thumbnail-blob 1 (int (.length thumbnail-blob)))))))))
+            (assoc :content (.getBytes blob 1 (int (.length blob))))
+            (assoc :thumbnail (.getBytes thumbnail-blob 1 (int (.length thumbnail-blob)))))))))
 
 (defn get-image-with-id
   [id]
-  ; (timbre/debug "get-image-with-id:" id (type id))
+  ; (log :debug "get-image-with-id:" id (type id))
   (let [image (-> (select images
                           (where {:id id})
                           (limit 1))
-                (first)
-                (underscore-to-dash-in-keys))]
+                  (first)
+                  (underscore-to-dash-in-keys))]
     (cond
       (nil? image)
       nil
@@ -1205,23 +1205,23 @@
       (let [blob (:content image)
             thumbnail-blob (:thumbnail image)
             converted-image (-> image
-                              (assoc :content   (.getBytes blob           1 (int (.length blob))))
-                              (assoc :thumbnail (.getBytes thumbnail-blob 1 (int (.length thumbnail-blob)))))]
-        ; (timbre/debug "    converted-image")
+                                (assoc :content (.getBytes blob 1 (int (.length blob))))
+                                (assoc :thumbnail (.getBytes thumbnail-blob 1 (int (.length thumbnail-blob)))))]
+        ; (log :debug "    converted-image")
         converted-image
         ))))
 
 (defn get-image-with-id-without-content
   [id]
-  ; (timbre/debug "get-image-with-id:" id (type id))
+  ; (log :debug "get-image-with-id:" id (type id))
   (let [image (-> (select images
                           (fields :id :user_id :thread_url :url :extension :size :width :height :time_retrieved :thumbnail)
-                          (where {:id id
-                                  :user_id   (:id (session/get :user))})
+                          (where {:id      id
+                                  :user_id (:id (session/get :user))})
                           (limit 1))
-                (first)
-                (underscore-to-dash-in-keys))]
-    ; (timbre/debug image)
+                  (first)
+                  (underscore-to-dash-in-keys))]
+    ; (log :debug image)
     (cond
       (nil? image)
       nil
@@ -1247,28 +1247,28 @@
             (values (dash-to-underscore-in-keys image)))
     (let [id (-> (select images
                          (fields :id)
-                         (where {:url (:url image)
-                                 :user_id (:user-id image)
+                         (where {:url            (:url image)
+                                 :user_id        (:user-id image)
                                  :time_retrieved (:time-retrieved image)})
                          (limit 1))
-               (first)
-               (underscore-to-dash-in-keys)
-               (:id))]
+                 (first)
+                 (underscore-to-dash-in-keys)
+                 (:id))]
       (insert images_extra_info
-              (values {:id id
-                       :md5_string (create-md5-string (:content image))
+              (values {:id            id
+                       :md5_string    (create-md5-string (:content image))
                        :saved_as_file false})))))
 
 (defn delete-image-with-url
   [url]
   (transaction
     (let [id (:id (get-image-with-url-without-content-and-thumbnail url))]
-    (delete images
-            (where {:id id}))
-    (delete images_extra_info
-            (where {:id id})))))
+      (delete images
+              (where {:id id}))
+      (delete images_extra_info
+              (where {:id id})))))
 
-(defn delete-image-with-id
+(comment defn delete-image-with-id
   [id]
   (transaction
     (delete images
@@ -1280,25 +1280,25 @@
   [id thumbnail width height]
   (update images
           (set-fields {:thumbnail thumbnail
-                       :width  width
-                       :height height})
+                       :width     width
+                       :height    height})
           (where {:id id})))
 
-(defn dump-images-table
+(comment defn dump-images-table
   []
-  (timbre/debug (select images)))
+  (log :debug (select images)))
 
 (defn count-images
   []
   (count-keyword (first (clojure.java.jdbc/query
-                                 merikens-2ch-browser.db.schema/db-spec
-                                 ["SELECT COUNT(*) FROM images WHERE user_id=?" (:id (session/get :user))] ))))
+                          merikens-2ch-browser.db.schema/db-spec
+                          ["SELECT COUNT(*) FROM images WHERE user_id=?" (:id (session/get :user))]))))
 
 (defn count-images-for-all-users
   []
   (count-keyword (first (clojure.java.jdbc/query
-                                 merikens-2ch-browser.db.schema/db-spec
-                                 ["SELECT COUNT(*) FROM images"] ))))
+                          merikens-2ch-browser.db.schema/db-spec
+                          ["SELECT COUNT(*) FROM images"]))))
 
 (defn count-unsaved-images
   []
@@ -1306,15 +1306,15 @@
     (first
       (clojure.java.jdbc/query
         merikens-2ch-browser.db.schema/db-spec
-        ["SELECT COUNT(*) FROM images_extra_info WHERE saved_as_file=FALSE"] ))))
+        ["SELECT COUNT(*) FROM images_extra_info WHERE saved_as_file=FALSE"]))))
 
-(defn count-saved-images
+(comment defn count-saved-images
   []
   (count-keyword
     (first
       (clojure.java.jdbc/query
         merikens-2ch-browser.db.schema/db-spec
-        ["SELECT COUNT(*) FROM images_extra_info WHERE saved_as_file=TRUE"] ))))
+        ["SELECT COUNT(*) FROM images_extra_info WHERE saved_as_file=TRUE"]))))
 
 (defn images-extra-info-up-to-date?
   []
@@ -1323,7 +1323,7 @@
         (first
           (clojure.java.jdbc/query
             merikens-2ch-browser.db.schema/db-spec
-            ["SELECT COUNT(*) FROM images_extra_info"] )))))
+            ["SELECT COUNT(*) FROM images_extra_info"])))))
 
 (defn get-image-extra-info
   [id]
@@ -1332,37 +1332,37 @@
 
 (defn add-image-extra-info
   [image-extra-info]
-    (insert images_extra_info
-            (values (dash-to-underscore-in-keys image-extra-info))))
+  (insert images_extra_info
+          (values (dash-to-underscore-in-keys image-extra-info))))
 
 (defn update-images-extra-info
   []
-  ; (timbre/debug "update-images-extra-info")
+  ; (log :debug "update-images-extra-info")
   (try
     (if (not (images-extra-info-up-to-date?))
       (doall
         (map
           #(let [image (get-image-with-id %1)]
-             (when (nil? (get-image-extra-info %1))
-               (timbre/info "Adding extra info to image" (str "(ID: " %1 ")"))
-               (add-image-extra-info {:id %1 :md5_string (create-md5-string (:content image)) :saved_as_file false})))
+            (when (nil? (get-image-extra-info %1))
+              (log :info "Adding extra info to image" (str "(ID: " %1 ")"))
+              (add-image-extra-info {:id %1 :md5_string (create-md5-string (:content image)) :saved_as_file false})))
           (get-all-image-ids))))
 
     (catch Throwable t
-      (timbre/info "update-images-extra-info: Unexpected exception:" (str t))
+      (log :info "update-images-extra-info: Unexpected exception:" (str t))
       (print-stack-trace t))))
 
 (defn update-md5-string-for-image
   [id]
   (let [image (get-image-with-id id)
         md5-string (create-md5-string (:content image))]
-         (timbre/info "Updating MD5 string for image:" (str "(ID: " id ")"))
-         (update images_extra_info
-                 (set-fields {:md5_string md5-string})
-                 (where      {:id id}))
-         md5-string))
+    (log :info "Updating MD5 string for image:" (str "(ID: " id ")"))
+    (update images_extra_info
+            (set-fields {:md5_string md5-string})
+            (where {:id id}))
+    md5-string))
 
-(defn update-md5-strings-for-all-images
+(comment defn update-md5-strings-for-all-images
   []
   (doall
     (map
@@ -1371,12 +1371,12 @@
 
 (defn get-next-unsaved-image
   []
-  ; (timbre/debug "get-next-unsaved-image")
+  ; (log :debug "get-next-unsaved-image")
   (let [image-id (clojure.java.jdbc/query
                    merikens-2ch-browser.db.schema/db-spec
                    ["SELECT id FROM images_extra_info WHERE saved_as_file=FALSE LIMIT 1"]
                    :row-fn :id :result-set-fn first)]
-    ; (timbre/debug "    image-id")
+    ; (log :debug "    image-id")
     (if image-id (get-image-with-id image-id) nil)))
 
 (defn mark-image-as-saved
@@ -1385,7 +1385,7 @@
           (set-fields {:saved_as_file true})
           (where {:id id})))
 
-(defn mark-all-images-as-unsaved
+(comment defn mark-all-images-as-unsaved
   []
   (update images_extra_info
           (set-fields {:saved_as_file false})))
@@ -1403,14 +1403,14 @@
 (defn get-download
   [url]
   (underscore-to-dash-in-keys (first (select downloads
-                                             (where {:url       url
-                                                     :user_id   (:id (session/get :user))})))))
+                                             (where {:url     url
+                                                     :user_id (:id (session/get :user))})))))
 
 (defn get-download-with-user-id
   [user-id url]
   (underscore-to-dash-in-keys (first (select downloads
-                                             (where {:url       url
-                                                     :user_id   user-id})))))
+                                             (where {:url     url
+                                                     :user_id user-id})))))
 
 (defn get-active-download
   [user-id url]
@@ -1436,33 +1436,33 @@
 (defn delete-active-download
   [user-id url]
   (delete downloads
-          (where {:url       url
-                  :user_id   user-id
-                  :status    "active"})
+          (where {:url     url
+                  :user_id user-id
+                  :status  "active"})
           (limit 1)))
 
 (defn delete-pending-download
   [user-id url]
   (delete downloads
-          (where {:url       url
-                  :user_id   user-id
-                  :status    "pending"})
+          (where {:url     url
+                  :user_id user-id
+                  :status  "pending"})
           (limit 1)))
 
 (defn delete-all-active-and-pending-downloads
   []
   (delete downloads
-          (where {:user_id   (:id (session/get :user))
-                  :status    "active"}))
+          (where {:user_id (:id (session/get :user))
+                  :status  "active"}))
   (delete downloads
-          (where {:user_id   (:id (session/get :user))
-                  :status    "pending"})))
+          (where {:user_id (:id (session/get :user))
+                  :status  "pending"})))
 
 (defn restart-all-active-downloads
   []
   (update downloads
           (set-fields {:status "pending"})
-          (where      {:status "active"})))
+          (where {:status "active"})))
 
 (defn count-downloads
   [status]
@@ -1470,20 +1470,20 @@
     (first
       (clojure.java.jdbc/query
         merikens-2ch-browser.db.schema/db-spec
-        ["SELECT COUNT(*) FROM downloads WHERE user_id = ? AND status = ?" (:id (session/get :user)) status] ))))
+        ["SELECT COUNT(*) FROM downloads WHERE user_id = ? AND status = ?" (:id (session/get :user)) status]))))
 
 (defn count-downloads-all-users
   [status]
-  ; (timbre/debug "count-downloads-all-users:" status)
+  ; (log :debug "count-downloads-all-users:" status)
   (count-keyword
     (first
       (clojure.java.jdbc/query
         merikens-2ch-browser.db.schema/db-spec
-        ["SELECT COUNT(*) FROM downloads WHERE status = ?" status] ))))
+        ["SELECT COUNT(*) FROM downloads WHERE status = ?" status]))))
 
 (defn pop-next-pending-download
   []
-  ; (timbre/debug "pop-next-pending-download")
+  ; (log :debug "pop-next-pending-download")
   (let [download (underscore-to-dash-in-keys
                    (first
                      (select downloads
@@ -1493,21 +1493,21 @@
       nil
       (do
         (delete downloads
-                (where {:url       (:url     download)
-                        :user_id   (:user-id download)
-                        :status    "pending"}))
+                (where {:url     (:url download)
+                        :user_id (:user-id download)
+                        :status  "pending"}))
         download))))
 
-(defn dump-downloads-table
+(comment defn dump-downloads-table
   []
-  (timbre/debug (select downloads)))
+  (log :debug (select downloads)))
 
-(defn dump-pending-downloads
+(comment defn dump-pending-downloads
   []
-  (timbre/debug (select downloads
-                        (where {:status "pending"}))))
+  (log :debug (select downloads
+                      (where {:status "pending"}))))
 
-(defn get-all-downloads
+(comment defn get-all-downloads
   []
   (map underscore-to-dash-in-keys (select downloads)))
 
@@ -1553,13 +1553,13 @@
       (insert user_settings
               (values {:user_id      (:id (session/get :user))
                        :setting_name setting-name
-                       :value value})))))
+                       :value        value})))))
 
-(defn dump-user-settings-table
+(comment defn dump-user-settings-table
   []
-  (timbre/debug (select user_settings)))
+  (log :debug (select user_settings)))
 
-(defn get-all-user-settings
+(comment defn get-all-user-settings
   []
   (map underscore-to-dash-in-keys (select user_settings)))
 
@@ -1569,7 +1569,7 @@
 ; SYSYEM SETTINGS ;
 ;;;;;;;;;;;;;;;;;;;
 
-(defn add-system-setting
+(comment defn add-system-setting
   [system-setting]
   (insert system_settings
           (values (dash-to-underscore-in-keys system-setting))))
@@ -1579,7 +1579,7 @@
   (:value (first (select system_settings
                          (where {:setting_name setting-name})))))
 
-(defn delete-system-setting
+(comment defn delete-system-setting
   [setting-name]
   (delete system_settings
           (where {:setting_name setting-name})))
@@ -1594,13 +1594,13 @@
               (where {:setting_name setting-name}))
       (insert system_settings
               (values {:setting_name setting-name
-                       :value value})))))
+                       :value        value})))))
 
-(defn dump-system-settings-table
+(comment defn dump-system-settings-table
   []
-  (timbre/debug (select system_settings)))
+  (log :debug (select system_settings)))
 
-(defn get-all-system-settings
+(comment defn get-all-system-settings
   []
   (map underscore-to-dash-in-keys (select system_settings)))
 
@@ -1618,14 +1618,14 @@
 (defn get-aborn-posts
   []
   (map underscore-to-dash-in-keys (select post_filters
-                                          (where {:user_id (:id (session/get :user))
+                                          (where {:user_id     (:id (session/get :user))
                                                   :filter_type "post"
                                                   :invisible   true}))))
 
 (defn get-aborn-ids
   []
   (map underscore-to-dash-in-keys (select post_filters
-                                          (where {:user_id (:id (session/get :user))
+                                          (where {:user_id     (:id (session/get :user))
                                                   :filter_type "id"
                                                   :invisible   true}))))
 
@@ -1648,7 +1648,7 @@
   (delete post_filters
           (where {:id id})))
 
-(defn delete-all-post-filters
+(comment defn delete-all-post-filters
   []
   (delete post_filters
           (where {:user_id (:id (session/get :user))})))
@@ -1679,42 +1679,42 @@
   (delete post_filters
           (where {:user_id     (:id (session/get :user))
                   :filter_type "id"
-                  :invisible    true})))
+                  :invisible   true})))
 
 (defn delete-all-aborn-filters-for-message
   []
   (delete post_filters
           (where {:user_id     (:id (session/get :user))
                   :filter_type "message"
-                  :invisible    true})))
+                  :invisible   true})))
 
-(defn dump-post-filters
+(comment defn dump-post-filters
   []
-  (timbre/debug (select post_filters)))
+  (log :debug (select post_filters)))
 
-(defn dump-aborn-ids
+(comment defn dump-aborn-ids
   []
-  (timbre/debug (select post_filters
-                        (where {:filter_type "id"}))))
+  (log :debug (select post_filters
+                      (where {:filter_type "id"}))))
 
-(defn display-row-counts
+(comment defn display-row-counts
   []
-  (timbre/info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM USERS"]))))
-  (timbre/info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM DAT_FILES"]))))
-  (timbre/info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM THREADS_IN_HTML"]))))
-  (timbre/info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM THREADS_IN_JSON"]))))
-  (timbre/info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM BOARD_INFO"]))))
-  (timbre/info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM FAVORITE_BOARDS"]))))
-  (timbre/info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM THREAD_INFO"]))))
-  (timbre/info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM THREAD_INFO WHERE title IS NULL"]))))
-  (timbre/info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM BOOKMARKS"]))))
-  (timbre/info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM FAVORITE_THREADS"]))))
-  (timbre/info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM IMAGES"]))))
-  (timbre/info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM IMAGES_EXTRA_INFO"]))))
-  (timbre/info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM DOWNLOADS"]))))
-  (timbre/info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM USER_SETTINGS"]))))
-  (timbre/info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM SYSTEM_SETTINGS"]))))
-  (timbre/info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM POST_FILTERS"])))))
+  (log :info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM USERS"]))))
+  (log :info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM DAT_FILES"]))))
+  (log :info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM THREADS_IN_HTML"]))))
+  (log :info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM THREADS_IN_JSON"]))))
+  (log :info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM BOARD_INFO"]))))
+  (log :info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM FAVORITE_BOARDS"]))))
+  (log :info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM THREAD_INFO"]))))
+  (log :info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM THREAD_INFO WHERE title IS NULL"]))))
+  (log :info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM BOOKMARKS"]))))
+  (log :info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM FAVORITE_THREADS"]))))
+  (log :info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM IMAGES"]))))
+  (log :info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM IMAGES_EXTRA_INFO"]))))
+  (log :info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM DOWNLOADS"]))))
+  (log :info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM USER_SETTINGS"]))))
+  (log :info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM SYSTEM_SETTINGS"]))))
+  (log :info (count-keyword (first (clojure.java.jdbc/query merikens-2ch-browser.db.schema/db-spec ["SELECT COUNT(*) FROM POST_FILTERS"])))))
 
 (defn upgrade-tables
   [db-spec]
