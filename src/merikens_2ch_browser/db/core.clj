@@ -23,16 +23,14 @@
 (ns merikens-2ch-browser.db.core
   (:use korma.core
         [korma.db :only (defdb transaction)])
-  (:require [clojure.java.jdbc :as sql]
-            [clojure.stacktrace :refer [print-stack-trace]]
+  (:require [clojure.stacktrace :refer [print-stack-trace]]
             [noir.session :as session]
             [taoensso.timbre :as timbre :refer [log]]
             [taoensso.nippy :as nippy]
             [clj-time.core]
             [clj-time.coerce]
             [merikens-2ch-browser.db.schema :as schema]
-            [merikens-2ch-browser.param :refer :all])
-  (:import (java.security MessageDigest)))
+            [merikens-2ch-browser.param :refer :all]))
 
 
 
@@ -1078,10 +1076,9 @@
 (defn create-md5-string
   [binary-array]
   (let [digest (let [m (java.security.MessageDigest/getInstance "MD5")]
-                                                                         (.reset m)
-                                                                         (.update m binary-array)
-                                                                         (.digest m))
-        i 1]
+                 (.reset m)
+                 (.update m binary-array)
+                 (.digest m))]
     (apply str (map #(.charAt
                        "0123456789ABCDEFGHIJKLMNOPQRSTUV"
                        (bit-and
@@ -1711,7 +1708,7 @@
 
 (defn upgrade-tables
   [db-spec]
-  (let [{:keys [id blob varchar varchar-ignorecase varchar-ignorecase-unique]} (schema/db-types db-spec)]
+  (let [{:keys [id]} (schema/db-types db-spec)]
     ; prior to 0.1.25
     (schema/create-post-filters-table db-spec)
     (schema/create-images-extra-info-table db-spec)
@@ -1733,4 +1730,4 @@
                              "threads_in_json")]
       (try
         (clojure.java.jdbc/execute! schema/db-spec [(str "ALTER TABLE " table-name " ADD COLUMN id " (clojure.string/replace id #"PRIMARY KEY" ""))])
-        (catch Throwable t)))))
+        (catch Throwable _)))))

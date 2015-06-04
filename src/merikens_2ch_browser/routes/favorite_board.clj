@@ -19,9 +19,7 @@
   (:use compojure.core)
   (:require [clojure.string :refer [split trim]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [clojure.data.json :as json]
             [ring.handler.dump]
-            [ring.util.response :as response]
             [compojure.core :refer :all]
             [noir.response :refer [redirect]]
             [noir.request]
@@ -33,7 +31,6 @@
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
             [taoensso.timbre :as timbre :refer [log]]
-            [clj-http.client :as client]
             [clj-time.core]
             [clj-time.coerce]
             [clj-time.format]

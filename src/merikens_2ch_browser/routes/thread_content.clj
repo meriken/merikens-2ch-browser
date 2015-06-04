@@ -21,7 +21,6 @@
             [clojure.stacktrace :refer [print-stack-trace]]
             ; [clojure.data.json :as json]
             [ring.handler.dump]
-            [ring.util.response :as response]
             [compojure.core :refer :all]
             [noir.response :refer [redirect]]
             [noir.request]
@@ -41,16 +40,13 @@
             [clj-time.predicates]
             ; [cheshire.core]
             [clj-json.core]
-            [merikens-2ch-browser.layout :as layout]
             [merikens-2ch-browser.util :refer :all]
             [merikens-2ch-browser.param :refer :all]
             [merikens-2ch-browser.url :refer :all]
             [merikens-2ch-browser.auth :refer :all]
             [merikens-2ch-browser.routes.image :refer [set-up-download ng-image? ng-image-url?]]
             [merikens-2ch-browser.db.core :as db]
-            [com.climate.claypoole :as cp]
-            [clojure.data.codec.base64 :as base64]))
-
+            [com.climate.claypoole :as cp]))
 
 
 

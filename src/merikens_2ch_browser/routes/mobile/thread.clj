@@ -19,9 +19,7 @@
   (:use compojure.core)
   (:require [clojure.string :refer [split trim]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [clojure.data.json :as json]
             [ring.handler.dump]
-            [ring.util.response :as response]
             [ring.util.codec :refer [url-encode url-decode]]
             [compojure.core :refer :all]
             [noir.response :refer [redirect]]
@@ -34,7 +32,6 @@
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
             [taoensso.timbre :as timbre :refer [log]]
-            [clj-http.client :as client]
             [clj-time.core]
             [clj-time.coerce]
             [clj-time.format]
@@ -50,7 +47,6 @@
                                                                 get-posts-in-current-dat-file]]
             [merikens-2ch-browser.routes.image :refer [set-up-download ng-image? ng-image-url?]]
             [merikens-2ch-browser.db.core :as db]
-            [com.climate.claypoole :as cp]
             [clojure.data.codec.base64 :as base64]))
 
 

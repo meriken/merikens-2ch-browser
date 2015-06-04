@@ -19,14 +19,11 @@
   (:use compojure.core)
   (:require [clojure.string :refer [split trim]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [clojure.data.json :as json]
             [ring.handler.dump]
-            [ring.util.response :as response]
             [ring.util.codec :refer [url-encode url-decode]]
             [compojure.core :refer :all]
             [noir.response :refer [redirect]]
             [noir.request]
-            [noir.session :as session]
             [noir.validation :refer [rule errors? has-value? on-error]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-css include-js]]
@@ -34,7 +31,6 @@
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
             [taoensso.timbre :as timbre :refer [log]]
-            [clj-http.client :as client]
             [clj-time.core]
             [clj-time.coerce]
             [clj-time.format]
@@ -46,8 +42,7 @@
             [merikens-2ch-browser.db.core :as db]
             [merikens-2ch-browser.routes.thread-list :refer [add-highlights-to-thread-title-and-escape-html
                                                              update-res-count-for-board
-                                                             update-res-count-for-multiple-threads]]
-            [com.climate.claypoole :as cp]))
+                                                             update-res-count-for-multiple-threads]]))
 
 
 

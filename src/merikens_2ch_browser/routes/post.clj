@@ -19,13 +19,10 @@
   (:use compojure.core)
   (:require [clojure.string :refer [split trim]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [clojure.data.json :as json]
             [ring.handler.dump]
-            [ring.util.response :as response]
             [compojure.core :refer :all]
             [noir.response :refer [redirect]]
             [noir.request]
-            [noir.session :as session]
             [noir.validation :refer [rule errors? has-value? on-error]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-css include-js]]
@@ -42,8 +39,7 @@
             [merikens-2ch-browser.param :refer :all]
             [merikens-2ch-browser.url :refer :all]
             [merikens-2ch-browser.auth :refer :all]
-            [merikens-2ch-browser.db.core :as db]
-            [com.climate.claypoole :as cp])
+            [merikens-2ch-browser.db.core :as db])
   (:import [org.apache.http.impl.cookie BasicClientCookie]))
 
 

@@ -101,7 +101,7 @@
       [:style css-pc]
       [:body body])))
 
-(defn login-required [& body]
+(comment defn login-required [& body]
   (if (not (check-login))
     (redirect-to-login-page)
     (html5
@@ -133,7 +133,7 @@
       [:style css-pc]
       [:body.simple-layout.scrollbar body])))
 
-(defn admin-only [& body]
+(comment defn admin-only [& body]
   (if (not (check-admin-login))
     (redirect-to-login-page)
     (html5

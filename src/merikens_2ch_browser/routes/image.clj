@@ -19,10 +19,8 @@
   (:use compojure.core)
   (:require [clojure.string :refer [split trim]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [clojure.data.json :as json]
             [clojure.java.io :as io]
             [ring.handler.dump]
-            [ring.util.response :as response]
             [compojure.core :refer :all]
             [noir.response :refer [redirect]]
             [noir.request]
@@ -34,17 +32,14 @@
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
             [taoensso.timbre :as timbre :refer [log]]
-            [clj-http.client :as client]
             [clj-time.core]
             [clj-time.coerce]
             [clj-time.format]
-            [merikens-2ch-browser.layout :as layout]
             [merikens-2ch-browser.util :refer :all]
             [merikens-2ch-browser.url :refer :all]
             [merikens-2ch-browser.param :refer :all]
             [merikens-2ch-browser.auth :refer :all]
-            [merikens-2ch-browser.db.core :as db]
-            [com.climate.claypoole :as cp])
+            [merikens-2ch-browser.db.core :as db])
   (:import [java.io File ByteArrayInputStream ByteArrayOutputStream FileOutputStream]
            java.awt.image.BufferedImage
            java.awt.Image
