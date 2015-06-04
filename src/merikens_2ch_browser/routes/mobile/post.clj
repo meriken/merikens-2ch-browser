@@ -32,7 +32,7 @@
             [hiccup.form :refer :all]
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :as timbre :refer [log]]
             [clj-http.client :as client]
             [clj-time.core]
             [clj-time.coerce]
@@ -73,19 +73,19 @@
             (hidden-field "board-name" board-name)
             (hidden-field "thread-url" thread-url)
             (if new-thread?
-              (text-field {:id "post-page-thread-title"　:placeholder "スレタイ"} "thread-title" thread-title)
+              (text-field {:id "post-page-thread-title" :placeholder "スレタイ"} "thread-title" thread-title)
               (hidden-field "thread-title" thread-title))
-            (text-field {:id "post-page-handle"　:placeholder "名前"}
+            (text-field {:id "post-page-handle" :placeholder "名前"}
                         "handle"
                         (if (or new-thread? (< 0 (count handle)))
                           handle
                           (db/get-last-handle service board thread)))
-            (text-field {:id "post-page-email"　:placeholder "メール"}
+            (text-field {:id "post-page-email" :placeholder "メール"}
                         "email"
                         (if (or new-thread? (< 0 (count email)))
                           email
                           (db/get-last-email service board thread)))
-            (text-area {:id "post-page-message"　:placeholder "本文"}
+            (text-area {:id "post-page-message" :placeholder "本文"}
                        "message"
                        (if (or new-thread? (< 0 (count message)))
                          message
@@ -171,7 +171,7 @@
                   (form-to
                     {:style "width: 100%; text-align: center; margin-top: 12px;"}
                     [:post "/post"]
-                    (hidden-field "board-name"  　　board-name)
+                    (hidden-field "board-name"  board-name)
                     (hidden-field "board-url"    board-url)
                     (hidden-field "thread-title" thread-title)
                     (hidden-field "thread-url"   thread-url)

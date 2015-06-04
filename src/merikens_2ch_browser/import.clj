@@ -15,41 +15,37 @@
 
 
 
+; TODO: Test these functions (2015-06-14)
+
 (ns merikens-2ch-browser.import
   (:use compojure.core)
   (:require [clojure.string :refer [split trim]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [clojure.data.json :as json]
             [ring.handler.dump]
-            [ring.util.response :as response]
             [compojure.core :refer :all]
             [noir.response :refer [redirect]]
             [noir.request]
-            [noir.session :as session]
             [noir.validation :refer [rule errors? has-value? on-error]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-css include-js]]
             [hiccup.form :refer :all]
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre]
-            [clj-http.client :as client]
+            [taoensso.timbre :refer [log]]
             [clj-time.core]
             [clj-time.coerce]
             [clj-time.format]
-            [merikens-2ch-browser.layout :as layout]
             [merikens-2ch-browser.util :refer :all]
+            [merikens-2ch-browser.interop :refer :all]
             [merikens-2ch-browser.param :refer :all]
             [merikens-2ch-browser.url :refer :all]
             [merikens-2ch-browser.auth :refer :all]
             [merikens-2ch-browser.routes.image :refer [set-up-download ng-image? ng-image-url?]]
             [merikens-2ch-browser.db.core :as db]
             [merikens-2ch-browser.routes.thread-content]
-            [merikens-2ch-browser.routes.pc.thread-content]
-            [com.climate.claypoole :as cp]
-            [clojure.data.codec.base64 :as base64])
-  (:import org.h2.util.Profiler
-           org.jsoup.Jsoup))
+            [merikens-2ch-browser.routes.pc.thread-content]))
+
+
 
 (defn
   search-for-dat-files
@@ -58,11 +54,11 @@
     #(try
        (let [dat-file %1
              thread-no (java.lang.Long/parseLong (second (re-find #"^([0-9]+)\.dat$" (.getName dat-file))))
-             parent (.getParentFile dat-file)
+             parent (get-parent-file dat-file)
              parent-name (.getName parent)
-             grandparent (.getParentFile parent)
+             grandparent (get-parent-file parent)
              grandparent-name (.getName grandparent)
-             greatgrandparent (try (.getParentFile grandparent) (catch Throwable t nil))
+             greatgrandparent (try (get-parent-file grandparent) (catch Throwable _ nil))
              greatgrandparent-name (and greatgrandparent (.getName greatgrandparent))
              shitaraba? (shitaraba-server? greatgrandparent-name)
              board (if shitaraba? (str grandparent-name "/" parent-name) parent-name)
@@ -71,13 +67,13 @@
                       (= grandparent-name "2channel") (or (db/get-server "2ch.net" board) (db/get-server "bbspink.com" board))
                       :else grandparent-name)
              server (if (= server "jbbs.livedoor.jp") "jbbs.shitaraba.net" server)]
-         (if (or (.isDirectory dat-file)
+         (if (or (is-directory dat-file)
                  ; (nil? server)
                  (and server (nil? (re-find #"^[a-z0-9.-]+$" server)))
                  (nil? board)
                  (nil? (re-find #"^[a-z0-9A-Z/]+$" board)))
            (do
-             (timbre/error "Error: Invalid directory structure:" (.getPath dat-file))
+             (log :error "Error: Invalid directory structure:" (get-path dat-file))
              nil)
            (do
              ; (println server board thread-no)
@@ -86,7 +82,7 @@
               :service (server-to-service server)
               :board board
               :thread-no thread-no})))
-       (catch Throwable t nil))
+       (catch Throwable _ nil))
 
     (remove
       #(nil? (re-find #"^[0-9]+\.dat$" (.getName %1)))
@@ -102,7 +98,7 @@
 
 (defn import-rep2-dat-files
   [user-id file-list]
-  (timbre/info "Importing rep2/rep2ex dat files...")
+  (log :info "Importing rep2/rep2ex dat files...")
   (try
     (let [dat-files (search-for-dat-files file-list)
           dat-file-count (count dat-files)
@@ -113,7 +109,7 @@
                                    :error
 
                                    (nil? (:server %1))
-                                   (do (timbre/info "Error:" (.getPath (:file %1)) "Server information not available.") :error)
+                                   (do (log :info "Error:" (get-path (:file %1)) "Server information not available.") :error)
 
                                    :else
                                    (let [dat-content (slurp (:file %1) :encoding "Windows-31J")
@@ -140,8 +136,8 @@
                                          title          (and title (unescape-html-entities title))
                                          valid?         (and title (valid-dat-content? dat-content))]
                                      (cond
-                                       (not valid?) (do (timbre/info "Invalid DAT file:" (.getPath (:file %1)) (get-progress start-time %2 %3)) :invalid)
-                                       old-dat-file (do (timbre/info "DAT file already exists in database:" (.getPath (:file %1)) (get-progress start-time %2 %3)) :duplicate)
+                                       (not valid?) (do (log :info "Invalid DAT file:" (get-path (:file %1)) (get-progress start-time %2 %3)) :invalid)
+                                       old-dat-file (do (log :info "DAT file already exists in database:" (get-path (:file %1)) (get-progress start-time %2 %3)) :duplicate)
                                        :else        (do
                                                       (db/add-dat-file new-dat-file)
                                                       (db/update-thread-title (:service %1) (:server %1)  (:board %1) (:thread-no %1) title)
@@ -150,18 +146,18 @@
                                                       (db/update-board-server-if-there-is-no-info (:service %1) (:server %1)  (:board %1))
                                                       (if (re-find #"<>Over [0-9]+ (Thread|Comments)[^<>]*<>" (last posts))
                                                         (db/mark-thread-as-archived (:service %1) (:server %1) (:board %1) (:thread-no %1)))
-                                                      (timbre/info "Imported DAT file:" (.getPath (:file %1)) (get-progress start-time %2 %3))
+                                                      (log :info "Imported DAT file:" (get-path (:file %1)) (get-progress start-time %2 %3))
                                                      :imported))))
-                                 (catch Throwable t (timbre/error "Error:" (.getPath (:file %1)) (str t) (get-progress start-time %2 %3)) :error))
+                                 (catch Throwable t (log :error "Error:" (get-path (:file %1)) (str t) (get-progress start-time %2 %3)) :error))
 
                               dat-files
                               (range 1 (inc dat-file-count))
                               (repeat dat-file-count)))]
-      (timbre/info "Imported rep2/rep2ex dat files:")
-      (timbre/info (format "    %s %7d" "Imported:  " (count (remove #(not (= %1 :imported )) results))))
-      (timbre/info (format "    %s %7d" "Duplicates:" (count (remove #(not (= %1 :duplicate)) results))))
-      (timbre/info (format "    %s %7d" "Invalid:   " (count (remove #(not (= %1 :invalid  )) results))))
-      (timbre/info (format "    %s %7d" "Errors:    " (count (remove #(not (= %1 :error    )) results)))))
+      (log :info "Imported rep2/rep2ex dat files:")
+      (log :info (format "    %s %7d" "Imported:  " (count (remove #(not (= %1 :imported )) results))))
+      (log :info (format "    %s %7d" "Duplicates:" (count (remove #(not (= %1 :duplicate)) results))))
+      (log :info (format "    %s %7d" "Invalid:   " (count (remove #(not (= %1 :invalid  )) results))))
+      (log :info (format "    %s %7d" "Errors:    " (count (remove #(not (= %1 :error    )) results)))))
     (catch Throwable t (clojure.stacktrace/print-stack-trace t) )))
 
 (defn process-p2-favita-brd-item
@@ -177,7 +173,7 @@
                (re-find #"^[a-z0-9.-]+$" server)
                (re-find #"^[a-zA-Z0-9/]+$" board)
                (> (count board-name) 0))
-      ; (timbre/debug service server board board-name)
+      ; (log :debug service server board board-name)
       (db/update-board-name service server board board-name)
       (db/add-favorite-board {:user-id   user-id
                               :service   service
@@ -188,17 +184,17 @@
 (defn import-p2-favita-brd
   [user-id file-list]
   (try
-    (let [results (doall (map #(try
+    (doall (map #(try
                                  (doall (for [item (clojure.string/split-lines (slurp %1 :encoding "Windows-31J"))]
                                           (do
                                             (process-p2-favita-brd-item user-id item))))
-                                 (timbre/info "Imported:" (.getPath %1))
-                                 (catch Throwable t (timbre/error "Error:" (.getPath %1) (str t)) :error))
+                                 (log :info "Imported:" (get-path %1))
+                                 (catch Throwable t (log :error "Error:" (get-path %1) (str t)) :error))
 
                               (remove
                                 #(nil? (re-find #"^p2_favita\.brd$" (.getName %1)))
-                                file-list)))]
-      nil)
+                                file-list)))
+      nil
     (catch Throwable t (clojure.stacktrace/print-stack-trace t) )))
 
 (defn process-p2-favlist-idx-item
@@ -215,7 +211,7 @@
                (re-find #"^[a-z0-9.-]+$" server)
                (re-find #"^[a-zA-Z0-9/]+$" board)
                (> (count thread-title) 0))
-      ; (timbre/debug service server board thread-no thread-title)
+      ; (log :debug service server board thread-no thread-title)
       (db/update-thread-title service server board thread-no thread-title)
       (db/add-favorite-thread {:user-id   user-id
                                :service   service
@@ -227,20 +223,20 @@
 (defn import-p2-favlist-idx
   [user-id file-list]
   (try
-    (let [results (doall (map #(try
+    (doall (map #(try
                                  (doall (for [item (clojure.string/split-lines (slurp %1 :encoding "Windows-31J"))]
                                           (do
                                             (process-p2-favlist-idx-item user-id item))))
-                                 (timbre/info "Imported:" (.getPath %1))
+                                 (log :info "Imported:" (get-path %1))
                                  (catch Throwable t
-                                   (timbre/error "Error:" (.getPath %1) (str t))
+                                   (log :error "Error:" (get-path %1) (str t))
                                    ; (clojure.stacktrace/print-stack-trace e)
                                    :error))
 
                               (remove
                                 #(nil? (re-find #"^p2_favlist\.idx$" (.getName %1)))
-                                file-list)))]
-      nil)
+                                file-list)))
+      nil
     (catch Throwable t (clojure.stacktrace/print-stack-trace t) )))
 
 (defn process-p2-recent-idx-item
@@ -257,7 +253,7 @@
                (re-find #"^[a-z0-9.-]+$" server)
                (re-find #"^[a-zA-Z0-9/]+$" board)
                (> (count thread-title) 0))
-      ; (timbre/debug service server board thread-no thread-title)
+      ; (log :debug service server board thread-no thread-title)
       (db/update-thread-title service server board thread-no thread-title)
       (db/update-time-last-viewed-with-user-id user-id service board thread-no (clj-time.coerce/to-sql-time (clj-time.core/now)))
       nil)))
@@ -265,26 +261,26 @@
 (defn import-p2-recent-idx
   [user-id file-list]
   (try
-    (let [results (doall (map #(try
+    (doall (map #(try
                                  (doall (for [item (reverse (clojure.string/split-lines (slurp %1 :encoding "Windows-31J")))]
                                           (do
                                             (process-p2-recent-idx-item user-id item))))
-                                 (timbre/info "Imported:" (.getPath %1))
+                                 (log :info "Imported:" (get-path %1))
                                  (catch Throwable t
-                                   (timbre/error "Error:" (.getPath %1) (str t))
+                                   (log :error "Error:" (get-path %1) (str t))
                                    (clojure.stacktrace/print-stack-trace t)
                                    :error))
 
                                 (remove
                                   #(nil? (re-find #"^p2_recent\.idx$" (.getName %1)))
-                                  file-list)))]
-      nil)
+                                  file-list)))
+      nil
     (catch Throwable t (clojure.stacktrace/print-stack-trace t) )))
 
 (defn import-rep2-data
   [user-email path]
 
-  (timbre/info "Scanning for files...")
+  (log :info "Scanning for files...")
   (try
     (let [user    (db/get-user-with-email user-email)
           user-id (:id user)
@@ -296,5 +292,5 @@
       (import-p2-favlist-idx  user-id file-list)
       (import-p2-recent-idx  user-id file-list))
     (catch Throwable t
-      (timbre/error t)
+      (log :error t)
       (clojure.stacktrace/print-stack-trace t))))

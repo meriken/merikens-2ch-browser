@@ -32,7 +32,7 @@
             [hiccup.form :refer :all]
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :as timbre :refer [log]]
             [clj-http.client :as client]
             [clj-time.core]
             [clj-time.coerce]
@@ -72,19 +72,19 @@
           (hidden-field "thread-url" thread-url)
           (hidden-field "new-thread-tab" (if new-thread-tab "1" "0"))
           (if new-thread?
-            (text-field {:id "post-page-thread-title"　:placeholder "スレタイ"} "thread-title" thread-title)
+            (text-field {:id "post-page-thread-title" :placeholder "スレタイ"} "thread-title" thread-title)
             (hidden-field "thread-title" thread-title))
-          (text-field {:id "post-page-handle"　:placeholder "名前"}
+          (text-field {:id "post-page-handle" :placeholder "名前"}
                       "handle"
                       (if (or new-thread? (< 0 (count handle)))
                         handle
                         (db/get-last-handle service board thread)))
-          (text-field {:id "post-page-email"　:placeholder "メール"}
+          (text-field {:id "post-page-email" :placeholder "メール"}
                       "email"
                       (if (or new-thread? (< 0 (count email)))
                         email
                         (db/get-last-email service board thread)))
-          (text-area {:id "post-page-message"　:placeholder "本文"}
+          (text-area {:id "post-page-message" :placeholder "本文"}
                      "message"
                      (if (or new-thread? (< 0 (count message)))
                         message
@@ -317,7 +317,7 @@
                     (form-to
                       {:style "width: 100%; text-align: center; margin-top: 12px;"}
                       [:post "/post"]
-                      (hidden-field "board-name"  　　board-name)
+                      (hidden-field "board-name"  board-name)
                       (hidden-field "board-url"    board-url)
                       (hidden-field "thread-title" thread-title)
                       (hidden-field "thread-url"   thread-url)
@@ -345,7 +345,7 @@
             (layout/post
               (list [:div.message-success message-from-server]
                     [:div {:style "width: 100%; text-align: center; margin-top: 12px;"}
-                     (javascript-button　"閉じる" "close();")]
+                     (javascript-button "閉じる" "close();")]
                     [:script
                      "window.resizeBy(0, $('html').height() - $(window).innerHeight());"
                      "setTimeout(function() { close(); }, 4000);"]

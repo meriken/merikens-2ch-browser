@@ -16,19 +16,16 @@
 
 
 (ns merikens-2ch-browser.util
-  (:require [org.httpkit.server :as http-kit]
-            [immutant.web :as immutant]
-            [ring.adapter.jetty :as jetty]
-            [noir.io :as io]
-            [markdown.core :as md]
+  (:require [immutant.web :as immutant]
             [ring.util.request :refer [request-url]]
             [ring.util.codec :refer [url-encode]]
             [ring.util.response]
             [hiccup.page :refer [include-css include-js]]
             [noir.request]
             [clj-http.client :as client]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :as timbre :refer [log]]
             [taoensso.timbre.appenders.rotor :as rotor]
+            [merikens-2ch-browser.interop :refer :all]
             [merikens-2ch-browser.param :refer :all]
             [merikens-2ch-browser.db.core :as db]
             [clojure.math.numeric-tower]
@@ -47,7 +44,7 @@
 
 (defn stop-web-server
   [& [do-not-reset-server]]
-  (timbre/info "Shutting down web server...")
+  (log :info "Shutting down web server...")
   (Thread/sleep 5000)
 
   (cond
@@ -69,13 +66,13 @@
   (if (not do-not-reset-server)
     (reset! server nil))
 
-  (timbre/info "Web server was shut down successfully."))
+  (log :info "Web server was shut down successfully."))
 
 (defn random-string
   ^String
   [^Long length]
   (let [salad "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"]
-    (apply str (for [n (range length)] (.charAt salad (rand-int (count salad)))))))
+    (apply str (for [_ (range length)] (.charAt salad (rand-int (count salad)))))))
 
 (defn random-element-id
   ^String
@@ -108,7 +105,7 @@
   ^clojure.lang.IPersistentList
   [^String text
    ^String script
-   & rest]
+   & _]
   (let [element-id (random-element-id)]
     (list
       [:button
@@ -165,7 +162,7 @@
   ^clojure.lang.IPersistentVector
   [^String url
    ^String text
-   & rest]
+   & _]
   [:button
    (if url
      {:onclick (str "location.href='" url "'") :class "link-button"}
@@ -183,16 +180,16 @@
                  (.and (Sanitizers/STYLES))))
 
 ; http://owasp-java-html-sanitizer.googlecode.com/svn/trunk/distrib/javadoc/org/owasp/html/Sanitizers.html
-(defn sanitize-html
+(comment defn sanitize-html
   ^String
   [^String code]
-  (.sanitize sanitizer code))
+  (java-sanitize sanitizer code))
 
 ; TODO: Add type specifiers.
 (defn format-time [timestamp]
   (-> "yyyy年MM月dd日 HH時mm分"
     (java.text.SimpleDateFormat.)
-    (.format timestamp)))
+    (java-format-timestamp timestamp)))
 
 (defn remove-html-tags
   ^String
@@ -235,7 +232,7 @@
     (if (>= 0 (get-http-request-count))
       nil
       (do
-        ; (timbre/debug "wait-for-http-requests-to-be-processed: Waiting...")
+        ; (log :debug "wait-for-http-requests-to-be-processed: Waiting...")
         (Thread/sleep 100)
         (recur)))))
 
@@ -268,7 +265,7 @@
                                              sanitized
                                              ))]
       message)
-    (catch Throwable t
+    (catch Throwable _
       nil)))
 
 (defn get-ronin-session-id
@@ -284,12 +281,12 @@
                   :body-encoding "ISO-8859-1"}
           url     "https://2chv.tora3.net/futen.cgi"
           response (client/post url params)]
-      ; (timbre/debug "get-ronin-session-id:" (:body response))
+      ; (log :debug "get-ronin-session-id:" (:body response))
       (if (and (= (:status response) 200)
                (re-find #"^SESSION-ID=" (:body response)))
         (clojure.string/replace (:body response) #"^SESSION-ID=" "")
         nil))
-    (catch Throwable t
+    (catch Throwable _
       nil)))
 
 (defn internal-server-error
@@ -366,8 +363,8 @@
   (let [filename-base  "merikens-2ch-browser"]
     (timbre/set-config!
       [:fmt-output-fn]
-      (fn [{:keys [level throwable message timestamp hostname ns]}
-           & [{:keys [nofonts?] :as appender-fmt-output-opts}]]
+      (fn [{:keys [level throwable message timestamp]}
+           & [{:keys [] :as _}]]
         (format "%s [%s] %s%s"
                 timestamp
                 (-> level name clojure.string/upper-case)
@@ -406,7 +403,7 @@
 (defn remove-ng-words-from-thread-title
   ^String
   [^String title]
-  ; (timbre/debug "remove-ng-words-from-thread-title:" title)
+  ; (log :debug "remove-ng-words-from-thread-title:" title)
   (if title
     (clojure.string/replace title #"[ 　\t]*(\[転載禁止\]|(©|\(c\))(2ch\.net|bbspink\.com))+[ 　\t]*" "")
     ""))
@@ -414,7 +411,7 @@
 (defn remove-ng-words-from-cap
   ^String
   [^String cap]
-  ; (timbre/debug "remove-ng-words-from-thread-title:" title)
+  ; (log :debug "remove-ng-words-from-thread-title:" title)
   (if cap
     (clojure.string/replace cap #"[ 　\t]*(転載ダメ|転載せんといてや|＠転載は禁止|©(2ch\.net|bbspink\.com))+[ 　\t]*" "")
     ""))
@@ -455,13 +452,13 @@
 
 (defn valid-dat-content?
   [dat-content]
-  ; (timbre/debug "valid-dat-content?")
+  ; (log :debug "valid-dat-content?")
   (try
     (and (not (re-find #"<title>もうずっと人大杉</title>" dat-content))
          (not (re-find #"あれ\? ★<><>404<>ないぞ<>404 だ" dat-content))
          (re-find #"<>" dat-content)
          (re-find #"\n$" dat-content))
-    (catch Throwable t
+    (catch Throwable _
       false)))
 
 (defn valid-thread-in-html?
@@ -484,7 +481,7 @@
 (defn mobile-device?
   []
   (let [ua (ring.util.response/get-header noir.request/*request* "user-agent")]
-    (timbre/info "User Agent:" ua)
+    (log :info "User Agent:" ua)
     (or (re-find #"[^a-zA-Z]iP(hone|ad|od)[^a-zA-Z]" ua)
         (re-find #"[^a-zA-Z]Android[^a-zA-Z]" ua))))
 
@@ -506,5 +503,6 @@
    :headers {"Content-type" "application/json; charset=utf-8"}
    ; :body    (clj-json.core/generate-string data)
    :body    (cheshire.core/generate-string data)})
+
 
 

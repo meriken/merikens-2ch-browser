@@ -33,7 +33,7 @@
             [hiccup.form :refer :all]
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :as timbre :refer [log]]
             [clj-http.client :as client]
             [clj-time.core]
             [clj-time.coerce]
@@ -51,9 +51,7 @@
             [merikens-2ch-browser.routes.image :refer [set-up-download ng-image? ng-image-url?]]
             [merikens-2ch-browser.db.core :as db]
             [com.climate.claypoole :as cp]
-            [clojure.data.codec.base64 :as base64])
-  (:import org.h2.util.Profiler
-           org.jsoup.Jsoup))
+            [clojure.data.codec.base64 :as base64]))
 
 
 
@@ -610,7 +608,7 @@
 
       (nil? parts)
       (html [:div.message-error
-             "スレッドの読み込みに失敗しました。"　[:br]
+             "スレッドの読み込みに失敗しました。" [:br]
              "スレッドのアドレスが不正です。"])
 
       :else
@@ -674,7 +672,7 @@
                                 [:div.thread {:data-role "page" :data-dom-cache "false" :data-title thread-title}
                                 [:div {:role "main" :class "ui-content" :style "padding: 0;"}
                                   posts-in-thread]
-                                 [:div {:data-role "footer" :data-position "fixed" :data-tap-toggle "false"}　
+                                 [:div {:data-role "footer" :data-position "fixed" :data-tap-toggle "false"}
                                   [:div {:style "float: left;"}
                                    (if start-specified?
                                      (link-to {:data-role "button"

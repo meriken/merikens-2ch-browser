@@ -66,7 +66,7 @@
    [jayq "2.5.4"]
 
    ; Logging
-   [com.taoensso/timbre "3.2.1"]
+   [com.taoensso/timbre "3.4.0"]
    [log4j "1.2.17" :exclusions [javax.mail/mail javax.jms/jms com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]
 
    ; Web server

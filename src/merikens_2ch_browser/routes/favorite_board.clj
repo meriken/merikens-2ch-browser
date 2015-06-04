@@ -32,7 +32,7 @@
             [hiccup.form :refer :all]
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :as timbre :refer [log]]
             [clj-http.client :as client]
             [clj-time.core]
             [clj-time.coerce]
@@ -272,7 +272,7 @@
           [:post "/handle-board-name"]
           [:div#popup-window-title "「" board-url "」の名前を設定"]
 
-          (text-field {:id "board-name" :placeholder "新しい板の名前"} 　"name" (:board-name (db/get-board-info service board))) [:br]
+          (text-field {:id "board-name" :placeholder "新しい板の名前"} "name" (:board-name (db/get-board-info service board))) [:br]
           (hidden-field "service" service)
           (hidden-field "server"  server)
           (hidden-field "board"   board)

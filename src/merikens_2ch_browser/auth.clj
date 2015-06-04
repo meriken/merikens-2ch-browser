@@ -19,7 +19,6 @@
   (require [noir.session :as session]
            [noir.request :as request]
            [ring.util.response :as response]
-           [taoensso.timbre :as timbre]
            [merikens-2ch-browser.param :refer :all]
            [merikens-2ch-browser.util :refer :all]))
 

@@ -16,14 +16,14 @@
 
 
 (ns merikens-2ch-browser.middleware
-  (:require [taoensso.timbre :as timbre]
+  (:require [taoensso.timbre :as timbre :refer [log]]
             [environ.core :refer [env]]
             [noir-exception.core :refer [wrap-internal-error wrap-exceptions]]
             [ring.middleware.params :refer [wrap-params]]
             ; [ring.middleware.json :refer [wrap-json-response wrap-json-params]]
             [ring.middleware.gzip :refer [wrap-gzip]]))
 
-(defn log-request [handler]
+(comment defn log-request [handler]
   (fn [req]
     (timbre/debug "Request:"
            (or (get (:headers req) "cf-connecting-ip"  )
@@ -41,7 +41,7 @@
    ; wrap-json-response
    ; #(wrap-json-params % {:keywords? true})
    wrap-exceptions
-   #(wrap-internal-error % :log (fn [e] (timbre/error e)))
+   #(wrap-internal-error % :log (fn [e] (log :error e)))
    wrap-gzip
    ])
 

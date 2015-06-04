@@ -32,7 +32,7 @@
             [hiccup.form :refer :all]
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :as timbre :refer [log]]
             [clj-http.client :as client]
             [clj-time.core]
             [clj-time.coerce]
@@ -50,9 +50,7 @@
             [merikens-2ch-browser.routes.image :refer [set-up-download ng-image? ng-image-url?]]
             [merikens-2ch-browser.db.core :as db]
             [com.climate.claypoole :as cp]
-            [clojure.data.codec.base64 :as base64])
-  (:import org.h2.util.Profiler
-           org.jsoup.Jsoup))
+            [clojure.data.codec.base64 :as base64]))
 
 
 
@@ -640,7 +638,7 @@
       (nil? parts)
       (html (if (nil? append-after)
               [:div.message-error-right-pane
-               "スレッドの読み込みに失敗しました。"　[:br]
+               "スレッドの読み込みに失敗しました。" [:br]
                "スレッドのアドレスが不正です。"]))
 
       :else
@@ -847,7 +845,7 @@
 
       (nil? parts)
       (html [:div.message-error-right-pane
-             "新着まとめ読みの読み込みに失敗しました。"　[:br]
+             "新着まとめ読みの読み込みに失敗しました。" [:br]
              "板のアドレスが不正です。"])
 
       :else

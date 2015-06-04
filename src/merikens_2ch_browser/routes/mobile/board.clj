@@ -33,7 +33,7 @@
             [hiccup.form :refer :all]
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :as timbre :refer [log]]
             [clj-http.client :as client]
             [clj-time.core]
             [clj-time.coerce]
@@ -167,7 +167,7 @@
                             ;         "目次")]
                             [:div {:role "main" :class "ui-content"}
                              [:ul {:data-role "listview"} (map :items-in-html filtered-items)]]
-                            [:div {:data-role "footer" :data-position "fixed" :data-tap-toggle "false"}　
+                            [:div {:data-role "footer" :data-position "fixed" :data-tap-toggle "false"}
                              [:div {:style "float:left"}
                              [:button {:class "ui-btn ui-shadow ui-corner-all ui-btn-icon-left ui-icon-refresh"
                                        :onclick "location.reload(true);"}
@@ -267,7 +267,7 @@
          (db/get-favorite-boards)
          (repeat refresh))]]
 
-     [:div {:data-role "footer" :data-position "fixed" :data-tap-toggle "false"}　
+     [:div {:data-role "footer" :data-position "fixed" :data-tap-toggle "false"}
       [:button {:class "ui-btn ui-shadow ui-corner-all ui-btn-icon-left ui-icon-refresh"
                 :onclick "location.reload(true);"}
       "更新"]

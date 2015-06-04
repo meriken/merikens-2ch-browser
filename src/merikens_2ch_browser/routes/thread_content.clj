@@ -32,7 +32,7 @@
             [hiccup.form :refer :all]
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :as timbre :refer [log]]
             [clj-http.client :as client]
             [pandect.algo.sha256 :refer :all]
             [clj-time.core]
@@ -49,9 +49,7 @@
             [merikens-2ch-browser.routes.image :refer [set-up-download ng-image? ng-image-url?]]
             [merikens-2ch-browser.db.core :as db]
             [com.climate.claypoole :as cp]
-            [clojure.data.codec.base64 :as base64])
-  (:import org.h2.util.Profiler
-           org.jsoup.Jsoup))
+            [clojure.data.codec.base64 :as base64]))
 
 
 

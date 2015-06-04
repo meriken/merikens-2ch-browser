@@ -90,7 +90,8 @@
 (def download-threads-in-json-from-2ch-net-and-bbspink-com true)
 
 (defn proxy-server
-  [url method]
+  ; [url method]
+  [_ _]
   nil)
 
 (def css-pc nil)

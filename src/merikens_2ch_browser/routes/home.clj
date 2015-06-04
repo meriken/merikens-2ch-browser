@@ -32,7 +32,7 @@
             [hiccup.form :refer :all]
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :as timbre :refer [log]]
             [clj-http.client :as client]
             [clj-time.core]
             [clj-time.coerce]
@@ -165,10 +165,10 @@
                           (:subprotocol schema/db-spec))]
       (html
         [:div [:div {:style "float:left;"} "メモリ(使用中):"] [:div {:style "float:right;"} (format "%.0fMB" used-memory)]] [:div {:style "clear: both;"}]
-        [:div [:div {:style "float:left;"} "メモリ(合計):"　] [:div {:style "float:right;"} (format "%.0fMB" total-memory)]] [:div {:style "clear: both;"}]
-        [:div [:div {:style "float:left;"} "メモリ使用率:"] [:div {:style "float:right;"} (format "%.0f%%" (* (/ used-memory total-memory) 100))]] [:div {:style "clear: both;"}]
-        [:div [:div {:style "float:left;"} "メモリ(最大):"　] [:div {:style "float:right;"} (format "%.0fMB" max-memory)]] [:div {:style "clear: both;"}]
-        [:div [:div {:style "float:left;"} "データベース:"　] [:div {:style "float:right;"} database-name]] [:div {:style "clear: both;"}]))))
+        [:div [:div {:style "float:left;"} "メモリ(合計):"  ] [:div {:style "float:right;"} (format "%.0fMB" total-memory)]] [:div {:style "clear: both;"}]
+        [:div [:div {:style "float:left;"} "メモリ使用率:"  ] [:div {:style "float:right;"} (format "%.0f%%" (* (/ used-memory total-memory) 100))]] [:div {:style "clear: both;"}]
+        [:div [:div {:style "float:left;"} "メモリ(最大):"  ] [:div {:style "float:right;"} (format "%.0fMB" max-memory)]] [:div {:style "clear: both;"}]
+        [:div [:div {:style "float:left;"} "データベース:"  ] [:div {:style "float:right;"} database-name]] [:div {:style "clear: both;"}]))))
 
 (defn main-page []
   (cond

@@ -26,14 +26,13 @@
   (:require [clojure.java.jdbc :as sql]
             [clojure.stacktrace :refer [print-stack-trace]]
             [noir.session :as session]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :as timbre :refer [log]]
             [taoensso.nippy :as nippy]
             [clj-time.core]
             [clj-time.coerce]
             [merikens-2ch-browser.db.schema :as schema]
             [merikens-2ch-browser.param :refer :all])
-  (:import java.security.MessageDigest
-           com.mchange.v2.c3p0.ComboPooledDataSource))
+  (:import (java.security MessageDigest)))
 
 
 
@@ -1061,7 +1060,7 @@
 (defn create-standard-md5-string
   [binary-array]
   (let [hash-string (.toString (BigInteger. 1
-                                                                       (let [m (MessageDigest/getInstance "MD5")]
+                                                                       (let [m (java.security.MessageDigest/getInstance "MD5")]
                                                                          (.reset m)
                                                                          (.update m binary-array)
                                                                          (.digest m)
@@ -1078,11 +1077,10 @@
 
 (defn create-md5-string
   [binary-array]
-  (let [digest (let [m (MessageDigest/getInstance "MD5")]
+  (let [digest (let [m (java.security.MessageDigest/getInstance "MD5")]
                                                                          (.reset m)
                                                                          (.update m binary-array)
-                                                                         (.digest m)
-                                                                         )
+                                                                         (.digest m))
         i 1]
     (apply str (map #(.charAt
                        "0123456789ABCDEFGHIJKLMNOPQRSTUV"

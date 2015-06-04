@@ -31,7 +31,7 @@
             [hiccup.form :refer :all]
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :as timbre :refer [log]]
             [clj-http.client :as client]
             [clj-time.core]
             [clj-time.coerce]
@@ -104,7 +104,7 @@
            [:span]
            "公式p2経由で書込する(2ch.sc)"]
           [:br]
-          (text-field     {:id "p2-email" :placeholder "メールアドレス"} 　"p2-email"    (db/get-user-setting "p2-email")) [:br]
+          (text-field     {:id "p2-email" :placeholder "メールアドレス"} "p2-email"    (db/get-user-setting "p2-email")) [:br]
           (password-field {:id "p2-password" :placeholder "パスワード"} "p2-password" (db/get-user-setting "p2-password")) [:br]
 
           [:input#use-ronin-checkbox

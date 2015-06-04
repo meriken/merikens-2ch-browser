@@ -19,12 +19,11 @@
   (:use [ring.middleware file-info file])
   (:require [org.httpkit.server :as http-kit]
             [immutant.web :as immutant]
-            [immutant.web.undertow :refer (options)]
+            [immutant.web.undertow :refer [options]]
             [ring.adapter.jetty :as jetty]
             [compojure.core :refer [defroutes]]
-            [compojure.route :as route]
             [noir.response :refer [redirect]]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :refer [log]]
             [environ.core :refer [env]]
             [com.climate.claypoole]
             [merikens-2ch-browser.param :refer :all]
@@ -49,14 +48,14 @@
   []
   (when (or (= (:subprotocol schema/db-spec) "h2")
             (= (:subprotocol schema/db-spec) "hsqldb"))
-    (timbre/info "Shutting down database...")
+    (log :info "Shutting down database...")
     (Thread/sleep 5000)
     (db/shutdown)
-    (timbre/info "Database was shut down successfully."))
-  (timbre/info (str app-name " was shut down successfully.")))
+    (log :info "Database was shut down successfully."))
+  (log :info (str app-name " was shut down successfully.")))
 
 (defn stop-app []
-  (timbre/info (str "Shutting down " app-name "..."))
+  (log :info (str "Shutting down " app-name "..."))
   (stop-web-server)
   (destroy))
 
@@ -64,12 +63,12 @@
   []
   (when (not @*config-file-loaded?*)
     (configure-timbre)
-    (timbre/info (str "Starting " app-name "..."))
+    (log :info (str "Starting " app-name "..."))
     (try
-      (timbre/info "Loading configuration file...")
+      (log :info "Loading configuration file...")
       (load-file config-file-path)
       (catch Throwable t
-        (timbre/info "Failed to load configuration file:" t)))
+        (log :info "Failed to load configuration file:" t)))
     (reset! *config-file-loaded?* (atom true))))
 
 (defn init
@@ -84,10 +83,10 @@
   ; Initialize the database if needed
   (if-not (schema/initialized?)
     (do
-      (timbre/info "Initializing the database...")
-      (timbre/info "Tables are being created...")
+      (log :info "Initializing the database...")
+      (log :info "Tables are being created...")
       (schema/create-tables schema/db-spec)))
-  (timbre/info "Tables are being upgraded...")
+  (log :info "Tables are being upgraded...")
   (db/upgrade-tables schema/db-spec)
 
   ; Set default system settings.
@@ -100,30 +99,30 @@
 
   (.addShutdownHook (Runtime/getRuntime) (Thread. (fn [] (stop-app))))
 
-  (timbre/info app-name "started successfully."))
+  (log :info app-name "started successfully."))
 
 (defn start-web-server
   [& [port]]
   (cond
     (= @server-software :jetty)
     (do
-      (timbre/info "Starting web server with Jetty...")
+      (log :info "Starting web server with Jetty...")
       (reset! server (jetty/run-jetty handler/app {:port (if port (Integer. port) default-port) :max-threads number-of-threads-for-web-server :join? false}))
-      (timbre/info "Web server stated successfully."))
+      (log :info "Web server stated successfully."))
 
     (= @server-software :immutant)
     (do
-      (timbre/info "Starting web server with Immutant 2...")
+      (log :info "Starting web server with Immutant 2...")
       (reset! server (immutant/run handler/app (options :port (if port (Integer. port) default-port) :io-threads immutant-io-threads :worker-threads immutant-worker-threads :host "0.0.0.0")))
-      (timbre/info "Web server stated successfully."))
+      (log :info "Web server stated successfully."))
 
     (= @server-software :http-kit)
     (do
-      (timbre/info "Starting web server with HTTP Kit...")
+      (log :info "Starting web server with HTTP Kit...")
       (reset! server (http-kit/run-server handler/app {:port (if port (Integer. port) default-port) :thread number-of-threads-for-web-server}))
-      (timbre/info "Web server stated successfully."))))
+      (log :info "Web server stated successfully."))))
 
-(defn restart-web-server
+(comment defn restart-web-server
   []
   (stop-web-server true)
   ; TODO: Use the same port.
@@ -140,23 +139,23 @@
     (nil? args)
     (start-app default-port)
 
-    (try (Integer. (first args)) (catch Throwable t nil))
+    (try (Integer. (first args)) (catch Throwable _ nil))
     (start-app (first args))
 
     (= (first args) "-jetty")
     (do
       (reset! server-software :jetty)
-      (start-app (try (Integer. (second args)) (catch Throwable t default-port))))
+      (start-app (try (Integer. (second args)) (catch Throwable _ default-port))))
 
     (= (first args) "-http-kit")
     (do
       (reset! server-software :http-kit)
-      (start-app (try (Integer. (second args)) (catch Throwable t default-port))))
+      (start-app (try (Integer. (second args)) (catch Throwable _ default-port))))
 
     (= (first args) "-immutant")
     (do
       (reset! server-software :immutant)
-      (start-app (try (Integer. (second args)) (catch Throwable t default-port))))
+      (start-app (try (Integer. (second args)) (catch Throwable _ default-port))))
 
     (= (first args) "-back-up-database")
     (do
@@ -197,5 +196,5 @@
     :else
     (do
       (configure-timbre)
-      (timbre/info "Invalid command line argument.")
+      (log :info "Invalid command line argument.")
       (System/exit 0))))

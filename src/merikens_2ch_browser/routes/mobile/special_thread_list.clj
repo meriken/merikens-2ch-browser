@@ -33,7 +33,7 @@
             [hiccup.form :refer :all]
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :as timbre :refer [log]]
             [clj-http.client :as client]
             [clj-time.core]
             [clj-time.coerce]
@@ -225,7 +225,7 @@
                          [:div.board {:data-role "page" :data-dom-cache "true" :data-tap-toggle "false" :data-title title}
                           [:div {:role "main" :class "ui-content"}
                            [:ul {:data-role "listview"} (map :items-in-html sorted-items)]]
-                          [:div {:data-role "footer" :data-position "fixed" :data-tap-toggle "false"}　
+                          [:div {:data-role "footer" :data-position "fixed" :data-tap-toggle "false"}
                            [:div {:style "float:left"}
                             [:button {:class "ui-btn ui-shadow ui-corner-all ui-btn-icon-left ui-icon-refresh"
                                       :onclick "location.reload(true);"}

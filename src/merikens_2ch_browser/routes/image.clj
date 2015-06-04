@@ -33,7 +33,7 @@
             [hiccup.form :refer :all]
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :as timbre :refer [log]]
             [clj-http.client :as client]
             [clj-time.core]
             [clj-time.coerce]
@@ -45,13 +45,10 @@
             [merikens-2ch-browser.auth :refer :all]
             [merikens-2ch-browser.db.core :as db]
             [com.climate.claypoole :as cp])
-  (:import [org.apache.http.impl.cookie BasicClientCookie]
-           [java.io File ByteArrayInputStream ByteArrayOutputStream FileOutputStream FileInputStream]
+  (:import [java.io File ByteArrayInputStream ByteArrayOutputStream FileOutputStream]
            java.awt.image.BufferedImage
            java.awt.Image
-           java.awt.Toolkit
-           javax.imageio.ImageIO
-           org.apache.commons.io.IOUtils))
+           javax.imageio.ImageIO))
 
 
 

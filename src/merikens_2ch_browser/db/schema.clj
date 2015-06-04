@@ -19,7 +19,7 @@
   (:require [clojure.java.jdbc :as sql]
             [clojure.stacktrace :refer [print-stack-trace]]
             [noir.io :as io]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :as timbre :refer [log]]
             [taoensso.timbre.appenders.rotor :as rotor]
             [merikens-2ch-browser.param :refer :all]))
 

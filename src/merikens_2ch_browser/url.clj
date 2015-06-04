@@ -17,10 +17,11 @@
 
 (ns merikens-2ch-browser.url
   (:require [merikens-2ch-browser.util :refer :all]
+            [merikens-2ch-browser.interop :refer :all]
             [merikens-2ch-browser.param :refer :all]
             [merikens-2ch-browser.db.core :as db]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :refer [log]]
             [clj-time.core]
             [clj-time.coerce]
             [clj-http.client]))
@@ -119,7 +120,7 @@
            :server  server
            :board   board})
         nil))
-    (catch Exception c
+    (catch Exception _
       nil)))
 
 (defn split-kako-thread-url
@@ -144,7 +145,7 @@
            :thread    (nth parts 3)
            :thread-no (nth parts 3)})
         nil))
-    (catch Throwable t
+    (catch Throwable _
       nil)))
 
 (defn split-thread-url
@@ -184,7 +185,7 @@
              :posts     (nth parts 7)
              :options   (nth parts 7)})
           nil))
-      (catch Throwable t
+      (catch Throwable _
         nil))))
 
 (defn thread-url-to-dat-url
@@ -202,7 +203,7 @@
       (str "http://" server "/" board "/dat/" thread ".dat"))))
 
 ; ex: http://awabi.2ch.net/test/offlaw2.so?shiro=kuma&bbs=english&key=1345426022&sid=ERROR
-(defn thread-url-to-offlaw2-dat-url
+(comment defn thread-url-to-offlaw2-dat-url
   ^String
 [^String thread-url]
   (let [{:keys [original-server board thread]} (split-thread-url thread-url)]
@@ -218,7 +219,7 @@
 (defn thread-url-to-json-url
   ^String
 [^String thread-url]
-  (let [{:keys [service server original-server board thread-no]} (split-thread-url thread-url)
+  (let [{:keys [server original-server board thread-no]} (split-thread-url thread-url)
         host-name (clojure.string/replace original-server #"\..*$" "")]
     (cond
       (or (net-server? server) (bbspink-server? server))
@@ -254,7 +255,7 @@
   ^clojure.lang.IPersistentMap
 [^String url]
   ; (timbre/debug url)
-  (let [headers {"User-Agent" 　　　user-agent
+  (let [headers {"User-Agent"    user-agent
                  "Cache-Control" "no-cache"}
         options {:headers        headers
                  :socket-timeout 60000
@@ -300,7 +301,7 @@
 ;     http://pc.2ch.net/os/kako/1008/10083/1008379128.dat.gz
 (defn thread-url-to-kako-dat-url
   [thread-url add-gz]
-  (let [{:keys [service current-server board thread]} (split-thread-url thread-url)
+  (let [{:keys [board thread]} (split-thread-url thread-url)
         server (second (re-find #"^http://([a-z0-9.]+)/" thread-url))]
     (if (= (count thread) 10)
       (str "http://" server "/" board "/kako/" (subs thread 0 4) "/" (subs thread 0 5) "/" thread ".dat" (if add-gz ".gz" ""))
@@ -323,13 +324,12 @@
       (try
         (if (and (:subject-txt board-info)
                  (or (not refresh)
-                     (<= (- now (.getTime (:time-subject-txt-retrieved board-info)))
+                     (<= (- now (get-time (:time-subject-txt-retrieved board-info)))
                          wait-time-for-downloading-subject-txt)))
           (do
             ; (timbre/info "Retrieved from cache:" subject-txt-url)
             (:subject-txt board-info))
-          (let [response (clj-http.client/get subject-txt-url (get-options-for-get-method board-url))
-                body (:body response)]
+          (let [response (clj-http.client/get subject-txt-url (get-options-for-get-method board-url))]
             (if (or (not (= (:status response) 200))
                     (< 1 (count (:trace-redirects response))))
               (do
@@ -343,11 +343,11 @@
                 ;              (- now (.getTime (:time-subject-txt-retrieved board-info)))
                 ;              wait-time-for-downloading-subject-txt)
                 (:body response)))))
-        (catch Throwable t
+        (catch Throwable _
           ; (timbre/debug "get-subject-txt: Unexpected Exception:" (str t) board-url)
           ; (timbre/debug "get-subject-txt: Returning (:subject-txt board-info)")
           (:subject-txt board-info))))
-    (catch Throwable t
+    (catch Throwable _
       ; (timbre/debug "get-subject-txt: Unexpected Exception:" (str t) board-url)
       ; (timbre/debug "get-subject-txt: Returning nil")
       nil)))
@@ -365,7 +365,7 @@
           result      (boolean (or (nil? subject-txt) (some #(= %1 (str thread-no)) thread-no-list)))]
       ; (timbre/debug "    is-thread-active?:" result)
       result)
-    (catch Throwable t
+    (catch Throwable _
       ; (timbre/error "    is-thread-active?: Unexpected Exception:" (str t) server board thread-no)
       ; (print-stack-trace t)
       true)))

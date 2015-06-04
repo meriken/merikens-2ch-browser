@@ -19,16 +19,13 @@
   (:require [clojure.java.jdbc :as sql]
             [jdbc.pool.c3p0    :refer [make-datasource-spec]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [noir.session :as session]
-            [taoensso.timbre :as timbre]
-            [taoensso.nippy :as nippy]
+            [taoensso.timbre :as timbre :refer [log]]
             [clj-time.core]
             [clj-time.coerce]
             [merikens-2ch-browser.db.core :as db]
             [merikens-2ch-browser.db.schema :as schema]
             [merikens-2ch-browser.util :refer :all]
-            [merikens-2ch-browser.param :refer :all])
-  (:import com.mchange.v2.c3p0.ComboPooledDataSource))
+            [merikens-2ch-browser.param :refer :all]))
 
 
 
@@ -88,7 +85,7 @@
                (process-partition %1)
                (timbre/info (str "Copying " table-name " table...") (get-progress start-time (min (* %2 partition-size) %3) %3))
                true
-               (catch java.sql.SQLNonTransientConnectionException e
+               (catch java.sql.SQLNonTransientConnectionException _
                  (timbre/info "Recovering from connection error...")
                  (.softResetAllUsers (:datasource src))
                  (.softResetAllUsers (:datasource dest))
@@ -121,8 +118,8 @@
       (if (not (some #{:without-images} rest))
         (doall (map #(copy-table pooled-src pooled-dest %1) (list "images" "images_extra_info"))))
 
-      (try (sql/db-do-commands pooled-dest "SHUTDOWN") (catch Throwable t))
-      (try (sql/db-do-commands pooled-src  "SHUTDOWN") (catch Throwable t))
+      (try (sql/db-do-commands pooled-dest "SHUTDOWN") (catch Throwable _))
+      (try (sql/db-do-commands pooled-src  "SHUTDOWN") (catch Throwable _))
 
       true)
 

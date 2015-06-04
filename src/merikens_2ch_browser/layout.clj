@@ -188,7 +188,7 @@
 
 (defn mobile-header
   []
-  (list [:div {:data-role "header" :data-position "fixed" :data-tap-toggle "false" :data-theme "a"}　
+  (list [:div {:data-role "header" :data-position "fixed" :data-tap-toggle "false" :data-theme "a"}
          (link-to {:data-role "button"
                    :class "ui-btn ui-shadow ui-corner-all ui-btn-icon-left ui-icon-back"
                    :data-rel "back"

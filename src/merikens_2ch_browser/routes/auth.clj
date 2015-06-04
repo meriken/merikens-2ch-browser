@@ -27,7 +27,7 @@
             [hiccup.element :refer [link-to]]
             [hiccup.form :refer [form-to label text-field password-field hidden-field submit-button]]
             [pandect.core :refer [sha512]]
-            [taoensso.timbre :as timbre]
+            [taoensso.timbre :as timbre :refer [log]]
             [merikens-2ch-browser.layout :as layout]
             [merikens-2ch-browser.db.core :as db]
             [merikens-2ch-browser.db.schema :as schema]
@@ -62,16 +62,16 @@
          [:div.message-info "作成されるアカウントは管理者アカウントになります。個人情報はMeriken's 2ch Browserが実行されているPCに保存され、ユーザーの許可がない限り外部には一切送信されません。"])
 	      (form-to {:onsubmit "return regformhash(this, this.pass, this.pass1);"}
                 [:post "/register"]
-	               (text-field     {:id "registration-username"　
+	               (text-field     {:id "registration-username"
                                  :placeholder (str "ユーザー名(英数字" username-min-length "～" username-max-length "文字)")
                                  :maxlength username-max-length}
                                 :username)
-	               (password-field {:id "registration-pass"　:placeholder "パスワード"} :pass)
-	               (password-field {:id "registration-pass1"　:placeholder "パスワード (確認)"} :pass1)
-	               (text-field     {:id "registration-email"　:placeholder "メールアドレス" :maxlength email-max-length} :email)
-	               (text-field     {:id "registration-display-name"　
+	               (password-field {:id "registration-pass" :placeholder "パスワード"} :pass)
+	               (password-field {:id "registration-pass1" :placeholder "パスワード (確認)"} :pass1)
+	               (text-field     {:id "registration-email" :placeholder "メールアドレス" :maxlength email-max-length} :email)
+	               (text-field     {:id "registration-display-name"
                                  :placeholder (str "表示名(" display-name-min-length "～" display-name-max-length "文字)")
-                                 :maxlength display-name-max-length}　
+                                 :maxlength display-name-max-length}
                                 :display-name)
 	               (submit-button
 	                 {:id       "registration-button"}
