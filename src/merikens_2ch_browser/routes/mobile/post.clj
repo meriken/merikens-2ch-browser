@@ -36,13 +36,12 @@
             [noir.validation :refer [rule errors? has-value? on-error]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-css include-js]]
-            [hiccup.form :refer :all]
-            [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
             [taoensso.timbre :refer [log]]
             [clj-time.core]
             [clj-time.coerce]
             [clj-time.format]
+            [merikens-2ch-browser.cursive :refer :all]
             [merikens-2ch-browser.layout :as layout]
             [merikens-2ch-browser.util :refer :all]
             [merikens-2ch-browser.param :refer :all]
@@ -59,7 +58,7 @@
   ; (timbre/debug "post-page:" message)
   (let [new-thread? (> (count board-url) 0)
         parts (if new-thread? (split-board-url board-url) (split-thread-url thread-url))
-        {:keys [service server board thread]} parts
+        {:keys [service board thread]} parts
         thread-title (if (> (count thread-title) 0)
                        thread-title
                        (and (not new-thread?) (remove-ng-words-from-thread-title (:title (db/get-thread-info service board thread)))))
@@ -160,7 +159,7 @@
               (let [new-cookie (BasicClientCookie. "IS_COOKIE" "1")
                     cookie-store (db/get-cookie-store)]
                 (.setDomain new-cookie ".open2ch.net")
-                (.addCookie cookie-store new-cookie)
+                (java-cookie-store-add-cookie cookie-store new-cookie)
                 (db/update-cookie-store cookie-store)))
             (layout/mobile-login-required
               (list
@@ -245,13 +244,13 @@
 
 
               [:div {:style "width: 100%; text-align: center; margin-top: 12px;"}
-               (let [parameters (str "board-name="  (ring.util.codec/url-encode board-name)
-                                     "&board-url="   (ring.util.codec/url-encode board-url)
-                                     "&thread-title="  (ring.util.codec/url-encode thread-title)
-                                     "&thread-url="   (ring.util.codec/url-encode thread-url)
-                                     "&handle="       (ring.util.codec/url-encode handle)
-                                     "&email="        (ring.util.codec/url-encode email)
-                                     "&message="      (ring.util.codec/url-encode message))]
+               (let [; parameters (str "board-name="  (ring.util.codec/url-encode board-name)
+                     ;                 "&board-url="   (ring.util.codec/url-encode board-url)
+                     ;                 "&thread-title="  (ring.util.codec/url-encode thread-title)
+                     ;                 "&thread-url="   (ring.util.codec/url-encode thread-url)
+                     ;                 "&handle="       (ring.util.codec/url-encode handle)
+                     ;                 "&email="        (ring.util.codec/url-encode email)
+                     ]
                  (javascript-button
                    "戻る"
                    "window.history.go(-1);"))]

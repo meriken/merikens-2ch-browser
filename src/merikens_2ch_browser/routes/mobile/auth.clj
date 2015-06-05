@@ -33,11 +33,8 @@
             [noir.session :as session]
             [noir.validation :refer [rule errors? has-value? on-error]]
             [ring.util.codec :refer [url-encode]]
-            [hiccup.element :refer [link-to]]
-            [hiccup.form :refer
-             [form-to label text-field password-field hidden-field submit-button]]
-            [pandect.core :refer [sha512]]
             [taoensso.timbre :refer [log]]
+            [merikens-2ch-browser.cursive :refer :all]
             [merikens-2ch-browser.layout :as layout]
             [merikens-2ch-browser.db.core :as db]
             [merikens-2ch-browser.param :refer :all]

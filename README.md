@@ -36,7 +36,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Meriken's 2ch Browser.  If not, see <http://www.gnu.org/licenses/>.
 
-# Additional permission under GNU GPL version 3 section 7
+### Additional permission under GNU GPL version 3 section 7
 
  If you modify this Program, or any covered work, by linking or
 combining it with Clojure (or a modified version of that

@@ -25,7 +25,8 @@
 
 
 
-; Extra definitions for IntelliJ and Cursive to suppress unnecessary warnings.
+; Wrappers for IntelliJ and Cursive to suppress unnecessary warnings.
+; Ignore warnings for this file.
 (ns merikens-2ch-browser.cursive
   (require [pandect.core]
            [hiccup.element]
@@ -39,15 +40,22 @@
 (defn is-directory          [f] (.isDirectory f))
 (defn get-time              [f] (.getTime f))
 (defn java-file-exists      [f] (.exists f))
+
 (defn java-format-timestamp [format timestamp] (.format format timestamp))
+
 (defn java-sanitize         [sanitizer code]   (.sanitize sanitizer code))
+
 (defn java-get-jdbc-url     [data-source]      (.getJdbcUrl data-source))
 (defn java-soft-reset-all-users [data-source] (.softResetAllUsers data-source))
+
 (defn java-pgobject-get-type  [obj] (.getType obj))
 (defn java-pgobject-get-value [obj] (.getValue obj))
+
 (defn java-message-digest-reset [m] (.reset m))
 (defn java-message-digest-update [m binary-array] (.update m binary-array))
 (defn java-message-digest-digest [m] (.digest m))
+
+(defn java-cookie-store-add-cookie [cookie-store new-cookie] (.addCookie cookie-store new-cookie))
 
 
 
@@ -57,6 +65,7 @@
 (defn form-to [& args] (apply hiccup.form/form-to args))
 (defn label [& args] (apply hiccup.form/label args))
 (defn text-field [& args] (apply hiccup.form/text-field args))
+(defn text-area [& args] (apply hiccup.form/text-area args))
 (defn password-field [& args] (apply hiccup.form/password-field args))
 (defn hidden-field [& args] (apply hiccup.form/hidden-field args))
 (defn submit-button [& args] (apply hiccup.form/submit-button args))
