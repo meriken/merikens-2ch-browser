@@ -25,3 +25,4 @@ pom.xml
 /merikens-2ch-browser*.zip
 /.idea
 /*.iml
+/resources/public/js/clojurescript.js
