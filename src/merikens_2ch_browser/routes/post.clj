@@ -36,14 +36,13 @@
             [noir.validation :refer [rule errors? has-value? on-error]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-css include-js]]
-            [hiccup.form :refer :all]
-            [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre :refer [log]]
+            [taoensso.timbre :refer [log]]
             [clj-http.client :as client]
             [clj-time.core]
             [clj-time.coerce]
             [clj-time.format]
+            [merikens-2ch-browser.cursive :refer :all]
             [merikens-2ch-browser.layout :as layout]
             [merikens-2ch-browser.util :refer :all]
             [merikens-2ch-browser.param :refer :all]
@@ -56,10 +55,10 @@
 
 (defn post-page
   [thread-url thread-title handle email message board-url board-name new-thread-tab]
-  ; (timbre/debug "post-page:" message)
+  ; (log :debug "post-page:" message)
   (let [new-thread? (> (count board-url) 0)
         parts (if new-thread? (split-board-url board-url) (split-thread-url thread-url))
-        {:keys [service server board thread]} parts
+        {:keys [service board thread]} parts
         thread-title (if (> (count thread-title) 0)
                        thread-title
                        (and (not new-thread?) (remove-ng-words-from-thread-title (:title (db/get-thread-info service board thread)))))
@@ -243,15 +242,15 @@
                 {:result :error   :body (:body post-response)}))))))
 
     (catch Throwable t
-      (timbre/debug "Unexpected exception:" (str t))
+      (log :debug "Unexpected exception:" (str t))
       {:result :error :body ""})))
 
 (defn handle-post
   [thread-title thread-url handle email message secret-name secret-value board-url board-name new-thread-tab]
   (let [new-thread? (> (count board-url) 0)
         parts (if new-thread? (split-board-url board-url) (split-thread-url thread-url))]
-    ; (timbre/debug parts)
-    ; (timbre/debug "'" handle "', '" email "', '" message "'")
+    ; (log :debug parts)
+    ; (log :debug "'" handle "', '" email "', '" message "'")
     (if (not parts)
       (ring.util.response/not-found "404 Not Found")
       (let [message (clojure.string/replace message #"\u301C" "\uFF5E") ; for Safari for OS X
@@ -312,7 +311,7 @@
               (let [new-cookie (BasicClientCookie. "IS_COOKIE" "1")
                     cookie-store (db/get-cookie-store)]
                 (.setDomain new-cookie ".open2ch.net")
-                (.addCookie cookie-store new-cookie)
+                (java-cookie-store-add-cookie cookie-store new-cookie)
                 (db/update-cookie-store cookie-store)))
             (layout/post
               (list [:div
@@ -393,13 +392,14 @@
                    message-from-server]))
 
               [:div {:style "width: 100%; text-align: center; margin-top: 12px;"}
-               (let [parameters (str "board-name="  (ring.util.codec/url-encode board-name)
-                                     "&board-url="   (ring.util.codec/url-encode board-url)
-                                     "&thread-title="  (ring.util.codec/url-encode thread-title)
-                                     "&thread-url="   (ring.util.codec/url-encode thread-url)
-                                     "&handle="       (ring.util.codec/url-encode handle)
-                                     "&email="        (ring.util.codec/url-encode email)
-                                     "&message="      (ring.util.codec/url-encode message))]
+               (let [; parameters (str "board-name="  (ring.util.codec/url-encode board-name)
+                     ;                 "&board-url="   (ring.util.codec/url-encode board-url)
+                     ;                 "&thread-title="  (ring.util.codec/url-encode thread-title)
+                     ;                 "&thread-url="   (ring.util.codec/url-encode thread-url)
+                     ;                 "&handle="       (ring.util.codec/url-encode handle)
+                     ;                 "&email="        (ring.util.codec/url-encode email)
+                     ;                 "&message="      (ring.util.codec/url-encode message))
+                     ]
                  (javascript-button
                    "戻る"
                    ; (str "open('/post?" parameters "', '_self');") ; window.opener does not work
@@ -413,7 +413,7 @@
     (if (or (not (check-login)) (nil? parts))
       (ring.util.response/not-found "404 Not Found")
       (let
-        [{:keys [service server board thread]} (split-thread-url thread-url)]
+        [{:keys [service board thread]} (split-thread-url thread-url)]
         (db/update-last-handle service board thread handle)
         (db/update-last-email service board thread email)
         (db/update-autosaved-draft service board thread draft)

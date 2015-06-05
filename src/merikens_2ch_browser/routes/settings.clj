@@ -36,15 +36,14 @@
             [noir.validation :refer [rule errors? has-value? on-error]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-css include-js]]
-            [hiccup.form :refer :all]
-            [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre :refer [log]]
+            [taoensso.timbre :refer [log]]
             [clj-time.core]
             [clj-time.coerce]
             [clj-time.format]
             [clj-json.core]
             [merikens-2ch-browser.layout :as layout]
+            [merikens-2ch-browser.cursive :refer :all]
             [merikens-2ch-browser.util :refer :all]
             [merikens-2ch-browser.param :refer :all]
             [merikens-2ch-browser.url :refer :all]
@@ -56,7 +55,7 @@
 
 (defn admin-settings-page
   []
-  ; (timbre/debug thread-url)
+  ; (log :debug thread-url)
   (let []
     (layout/admin-only-popup-window
       (list
@@ -77,7 +76,7 @@
 
 (defn handle-admin-settings
   [allow-new-user-accounts]
-  (timbre/debug "handle-admin-settings:" allow-new-user-accounts)
+  (log :debug "handle-admin-settings:" allow-new-user-accounts)
   (try
     (if (not (check-admin-login))
       (redirect "/login")
@@ -86,12 +85,12 @@
                                   (if (= allow-new-user-accounts "1") "true" "false"))
         (html [:script "close();"])))
 
-    (catch Throwable t
+    (catch Throwable _
       (redirect "/admin-settings?error=1"))))
 
 (defn user-settings-page
   []
-  ; (timbre/debug thread-url)
+  ; (log :debug thread-url)
   (let []
     (layout/popup-window
       (list
@@ -130,7 +129,7 @@
 
 (defn handle-user-settings
   [use-p2-to-post p2-email p2-password use-ronin ronin-email ronin-secret-key]
-  ; (timbre/debug "handle-user-settings")
+  ; (log :debug "handle-user-settings")
   (try
     (if (not (check-login))
       (redirect "/login")
@@ -143,12 +142,12 @@
         (db/update-user-setting "ronin-secret-key" ronin-secret-key)
         (html [:script "close();"])))
 
-    (catch Throwable t
+    (catch Throwable _
       (redirect "/user-settings?error=1"))))
 
 (defn image-download-settings-page
   []
-  ; (timbre/debug thread-url)
+  ; (log :debug thread-url)
   (layout/admin-only-popup-window
     (list
       (include-js-no-cache "/js/image-download-settings.js")
@@ -180,7 +179,7 @@
 
 (defn handle-image-download-settings
   [save-downloaded-images use-image-proxy]
-  ; (timbre/debug "handle-image-download-settings:" save-downloaded-images use-image-proxy)
+  ; (log :debug "handle-image-download-settings:" save-downloaded-images use-image-proxy)
   (try
     (if (not (check-admin-login))
       (redirect "/login")
@@ -190,7 +189,7 @@
         (db/update-system-setting "use-image-proxy"
                                   (if (= use-image-proxy "1") "true" "false"))
         (html [:script "close();"])))
-    (catch Throwable t
+    (catch Throwable _
       (redirect "/image-download-settings?error=1"))))
 
 
@@ -201,7 +200,7 @@
 
 (defn aborn-filters-page
   []
-   ; (timbre/debug "aborn-filters-page")
+   ; (log :debug "aborn-filters-page")
   (let []
     (layout/popup-window
       (list
@@ -216,11 +215,11 @@
 
 (defn api-aborn-filters-post
   [body]
-  (timbre/debug "api-aborn-filters-post")
+  (log :debug "api-aborn-filters-post")
   (when (check-login)
     (db/delete-all-aborn-filters-for-message)
     (doall (map #(let [{:keys [pattern board thread-title]} %]
-                   (timbre/debug % pattern)
+                   (log :debug % pattern)
                    (db/add-post-filter {:user-id     (:id (session/get :user))
                                         :filter-type  "message"
                                         :pattern      pattern
@@ -238,7 +237,7 @@
 
 (defn aborn-posts-page
   []
-   ; (timbre/debug "aborn-posts-page")
+   ; (log :debug "aborn-posts-page")
   (let []
     (layout/popup-window
       (list
@@ -253,12 +252,12 @@
 
 (defn api-aborn-posts-post
   [body]
-  ; (timbre/debug "api-aborn-posts-post" )
+  ; (log :debug "api-aborn-posts-post" )
   (when (check-login)
     (db/delete-all-aborn-posts)
     (doall (map #(let [{:keys [pattern]} %
                        board (nth (clojure.string/split pattern #",") 1 nil)]
-                   ; (timbre/debug board pattern)
+                   ; (log :debug board pattern)
                    (db/add-post-filter {:user-id     (:id (session/get :user))
                                         :filter-type "post"
                                         :pattern     pattern
@@ -274,7 +273,7 @@
 
 (defn aborn-ids-page
   []
-  ; (timbre/debug "aborn-ids-page")
+  ; (log :debug "aborn-ids-page")
   (layout/popup-window
     (list
       [:style (css-aborn-ids)]
@@ -288,11 +287,11 @@
 
 (defn api-aborn-ids-post
   [body]
-  ; (timbre/debug "api-aborn-ids-post:" params)
+  ; (log :debug "api-aborn-ids-post:" params)
   (when (check-login)
     (db/delete-all-aborn-ids)
     (doall (map #(let [{:keys [pattern]} %]
-                   ; (timbre/debug pattern)
+                   ; (log :debug pattern)
                    (db/add-post-filter {:user-id     (:id (session/get :user))
                                         :filter-type "id"
                                         :pattern     pattern}))
@@ -311,7 +310,7 @@
     (future
       (future
         (Thread/sleep 60000)
-        (timbre/info "Forcibly shutting down the process...")
+        (log :info "Forcibly shutting down the process...")
         (.halt (java.lang.Runtime/getRuntime) 0))
       (System/exit 0))
     (html "サーバーを停止しています。完全に停止するまで電源を切らないでください。")))

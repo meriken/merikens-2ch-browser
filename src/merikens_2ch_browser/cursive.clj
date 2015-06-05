@@ -29,6 +29,7 @@
 ; Ignore warnings for this file.
 (ns merikens-2ch-browser.cursive
   (require [pandect.core]
+           [pandect.algo.sha256]
            [hiccup.element]
            [hiccup.form]
            [garden.units]))
@@ -57,9 +58,16 @@
 
 (defn java-cookie-store-add-cookie [cookie-store new-cookie] (.addCookie cookie-store new-cookie))
 
+(defn java-matcher-find [matcher] (.find matcher))
+(defn java-matcher-start [matcher] (.start matcher))
+(defn java-matcher-end [matcher] (.end matcher))
+
+(defn java-graphics2d-draw-image [graphics2d image x y observer] (.drawImage graphics2d image x y observer))
+
 
 
 (defn sha512 [s] (pandect.core/sha512 s))
+(defn sha256-hmac [s key] (pandect.algo.sha256/sha256-hmac s key))
 
 (defn link-to [& args] (apply hiccup.element/link-to args))
 (defn form-to [& args] (apply hiccup.form/form-to args))

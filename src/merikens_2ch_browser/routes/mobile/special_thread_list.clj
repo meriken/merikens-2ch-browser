@@ -40,7 +40,7 @@
             [hiccup.form :refer :all]
             [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre :refer [log]]
+            [taoensso.timbre :refer [log]]
             [clj-time.core]
             [clj-time.coerce]
             [clj-time.format]
@@ -56,76 +56,9 @@
 
 
 
-(defn mobile-thread-list-item-to-html
-  [item board-url bookmark-map refresh]
-  (let [dat (second (re-find #"^([0-9]+\.(dat|cgi))(<>|,)" item))
-        created (-> dat
-                  (clojure.string/replace #"\.(dat|cgi)$" "")
-                  (Long/parseLong )
-                  (* 1000)
-                  (clj-time.coerce/from-long)
-                  (clj-time.core/to-time-zone (clj-time.core/time-zone-for-offset +9)))
-        time-since-creation (/ (- (clj-time.coerce/to-long (clj-time.core/now)) (clj-time.coerce/to-long created)) 1000)
-        after-dat (clojure.string/replace item #"^[0-9]+\.(dat|cgi)(<>|,)" "")
-        res-count (Integer/parseInt (clojure.string/replace (clojure.string/replace after-dat #"^.* ?\(" "") #"\)$" ""))
-        thread-id (random-string 16)
-        board-url-parts (re-find #"^http://([a-z0-9.-]+)/(.*)/$" board-url)
-        server     (nth board-url-parts 1)
-        board      (nth board-url-parts 2)
-        thread-no  (clojure.string/replace dat #"\.(dat|cgi)$" "")
-        thread-url (create-thread-url server board thread-no)
-        speed      (float (/ res-count (/ time-since-creation 60 60 24)))
-        service    (server-to-service server)
-        new-res-count-id (clojure.string/replace (str "new-post-count-" service "-" board "-" thread-no) #"[./]" "_")
-        res-count-id (clojure.string/replace (str "post-count-" service "-" board "-" thread-no) #"[./]" "_")
-        thread-title-class (clojure.string/replace (str "thread-title-" service "-" board "-" thread-no) #"[./]" "_")
-        bookmark   (or ((keyword thread-no) bookmark-map)
-                       (db/get-bookmark service board thread-no))
-        ; thread-info (db/get-thread-info service board thread-no)
-        new-thread? (nil? bookmark)
-        new-res?   (and bookmark (> bookmark 0) (> (- res-count bookmark) 0))
-        new-res-count (cond
-                        (nil? bookmark) res-count
-                        new-res? (- res-count bookmark)
-                        (= res-count bookmark) 0
-                        :else 0)
-        title      (unescape-html-entities (clojure.string/replace after-dat #" *\([0-9]+\)$" ""))
-        title      (remove-ng-words-from-thread-title title)
-        real-title (if (sc-url? board-url) (clojure.string/replace title #"^★" "") title)]
-
-    {:new-thread?   new-thread?
-     :viewed?       (and bookmark (> bookmark 0))
-     :new-res-count new-res-count
-     :service       service
-     :server        server
-     :board         board
-     :thread-no     thread-no
-     :res-count     res-count
-     :items-in-html [:li {:data-icon "false"}
-                     [:a {:href (str "./mobile-thread?thread-url=" (to-url-encoded-string thread-url))
-                          :onclick "removeDomCachesForThreads();"
-                          :style "white-space: normal;"}
-                      [:span
-                       (if (or new-thread? (and bookmark (> bookmark 0)))
-                         [:span {:class "ui-li-count"
-                                 :style (if (or new-thread? (> new-res-count 0))
-                                          "color: white; border: red; background: red; text-shadow: none;"
-                                          "color: white; border: gray; background: gray; text-shadow: none;")}
-                          (if new-thread? "新" new-res-count)])]
-                      [:span {:style (cond
-                                       new-thread?                   "color: red;"
-                                       (> new-res-count 0)           ""
-                                       (and bookmark (> bookmark 0)) ""
-                                       :else                         "")}
-                       (escape-html real-title)]
-                      [:span {:style (if new-thread?
-                                       "color: red; font-weight: normal;"
-                                       "color: gray; font-weight: normal;")}
-                       " (" res-count ")"]]]}))
-
 (defn mobile-convert-special-thread-list-item-to-html
   [item index context board-info-map]
-  ; (timbre/debug item)
+  ; (log :debug item)
   (try
     (let [{:keys [service server board thread-no]} item
           thread-info (db/get-thread-info service board thread-no)
@@ -140,11 +73,11 @@
           ;                                                (= service "2ch.net") "(net)"
           ;                                                (= service "open2ch.net") "(op)"))
 
-          created (-> thread-no
-                    (* 1000)
-                    (clj-time.coerce/from-long)
-                    (clj-time.core/to-time-zone (clj-time.core/time-zone-for-offset +9)))
-          time-since-creation (/ (- (clj-time.coerce/to-long (clj-time.core/now)) (clj-time.coerce/to-long created)) 1000)
+          ; created (-> thread-no
+          ;           (* 1000)
+          ;           (clj-time.coerce/from-long)
+          ;           (clj-time.core/to-time-zone (clj-time.core/time-zone-for-offset +9)))
+          ; time-since-creation (/ (- (clj-time.coerce/to-long (clj-time.core/now)) (clj-time.coerce/to-long created)) 1000)
           ; thread-id (random-string 16)
           ; speed      (float (/ (if (nil? res-count) 1 res-count) (/ time-since-creation 60 60 24)))
           bookmark      (db/get-bookmark service board thread-no)
@@ -193,20 +126,20 @@
                          " (" res-count ")"]]]})
 
     (catch Throwable t
-      (timbre/debug "mobile-convert-special-thread-list-item-to-html: Exception caught:" (str t))
-      (timbre/debug "item:" item)
-      (timbre/debug "index:" index)
-      (timbre/debug "context:" context)
+      (log :debug "mobile-convert-special-thread-list-item-to-html: Exception caught:" (str t))
+      (log :debug "item:" item)
+      (log :debug "index:" index)
+      (log :debug "context:" context)
       (print-stack-trace t)
       nil)))
 
 (defn mobile-get-special-thread-list
   [items context title]
-  (timbre/debug "mobile-get-special-thread-list:" (count items))
+  (log :debug "mobile-get-special-thread-list:" (count items))
   (try
     (increment-http-request-count)
     (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
-    (timbre/info "Preparing thread list...")
+    (log :info "Preparing thread list...")
     (let [start-time (System/nanoTime)
           _              (update-res-count-for-multiple-threads items true)
           board-info-map (create-board-info-map items)
@@ -224,7 +157,7 @@
                                   (and      (:viewed? %1)      (not (:viewed? %2)))     -1
                                   (and (not (:viewed? %1))          (:viewed? %2))      +1
                                   :else                                                 0)
-                                (catch Throwable t 0))
+                                (catch Throwable _ 0))
                              processed-items)
           result       (layout/mobile-login-required
                          [:div.board {:data-role "page" :data-dom-cache "true" :data-tap-toggle "false" :data-title title}
@@ -239,7 +172,7 @@
 
       (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
       (decrement-http-request-count)
-      (timbre/info (str "    Total time: " (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms"))
+      (log :info (str "    Total time: " (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms"))
       result)
     (catch Throwable t
       (print-stack-trace t)

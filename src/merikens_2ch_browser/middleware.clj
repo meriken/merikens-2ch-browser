@@ -26,7 +26,7 @@
 
 
 (ns merikens-2ch-browser.middleware
-  (:require [taoensso.timbre :as timbre :refer [log]]
+  (:require [taoensso.timbre :refer [log]]
             [environ.core :refer [env]]
             [noir-exception.core :refer [wrap-internal-error wrap-exceptions]]
             [ring.middleware.params :refer [wrap-params]]
@@ -35,7 +35,7 @@
 
 (comment defn log-request [handler]
   (fn [req]
-    (timbre/debug "Request:"
+    (log :debug "Request:"
            (or (get (:headers req) "cf-connecting-ip"  )
                (get (:headers req) "x-forwarded-server")
                (:remote-addr req))

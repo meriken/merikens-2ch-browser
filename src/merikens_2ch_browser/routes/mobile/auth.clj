@@ -44,7 +44,7 @@
 
 (defn mobile-registration-page
   []
-  ; (timbre/debug "registration-page:" (session/get :user))
+  ; (log :debug "registration-page:" (session/get :user))
   (cond
     (session/get :user)
     (redirect "/main")
@@ -139,7 +139,7 @@
           (redirect "/login?account-created=1"))))))
 
 (defn mobile-login-page [return-to login-required admin-only account-created]
-  ; (timbre/debug "login-page:" (session/get :user))
+  ; (log :debug "login-page:" (session/get :user))
   (cond
     (session/get :user)
     (redirect (if return-to return-to "/mobile-main"))
@@ -176,7 +176,7 @@
         pp (if (vector? pp) (last pp) pp)
         t (if (vector? t) (last t) t)
         tt (if (vector? tt) (last tt) tt)]
-    ; (timbre/debug "mobile-handle-login:" email p t return-to)
+    ; (log :debug "mobile-handle-login:" email p t return-to)
     (rule
       (or (and
             (re-find #"^[0-9a-f]{128}$" p)

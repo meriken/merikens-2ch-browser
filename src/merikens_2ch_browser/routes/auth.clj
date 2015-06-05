@@ -44,7 +44,7 @@
 
 (defn registration-page
   []
-  ; (timbre/debug "registration-page:" (session/get :user))
+  ; (log :debug "registration-page:" (session/get :user))
   (cond
     (session/get :user)
     (redirect "/main")
@@ -139,7 +139,7 @@
           (redirect "/login?account-created=1"))))))
 
 (defn login-page [return-to login-required admin-only account-created]
-  ; (timbre/debug "login-page:" (session/get :user))
+  ; (log :debug "login-page:" (session/get :user))
   (cond
     (session/get :user)
     (redirect (if return-to return-to "/"))
@@ -177,7 +177,7 @@
 (defn handle-login [email p t return-to]
   (let [user (db/get-user-with-email email)
         p (if (vector? p) (last p) p)]
-    ; (timbre/debug "handle-login:" email p t return-to)
+    ; (log :debug "handle-login:" email p t return-to)
     (rule
       (and
         (re-find #"^[0-9a-f]{128}$" p)

@@ -38,8 +38,6 @@
             [noir.io]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-css include-js]]
-            [hiccup.form :refer :all]
-            [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
             [taoensso.timbre :refer [log]]
             [clj-http.client :as client]
@@ -47,6 +45,7 @@
             [clj-time.coerce]
             [clj-time.format]
             [noir.request]
+            [merikens-2ch-browser.cursive :refer :all]
             [merikens-2ch-browser.layout :as layout]
             [merikens-2ch-browser.util :refer :all]
             [merikens-2ch-browser.param :refer :all]
@@ -118,14 +117,14 @@
                 board-name (-> item
                              (clojure.string/replace #"^<A HREF=http://[a-z0-9.]+(2ch\.net|bbspink\.com|2ch\.sc|open2ch\.net|machi\.to)/[a-zA-Z0-9]+/( TARGET=_blank)?>" "")
                              (clojure.string/replace #"</A>(<BR>|<br>)?$" ""))
-                site-name  (-> board-url
-                             (clojure.string/replace #"^http://[^.]+\." "")
-                             (clojure.string/replace #"/.*$" ""))
+                ; site-name  (-> board-url
+                ;              (clojure.string/replace #"^http://[^.]+\." "")
+                ;              (clojure.string/replace #"/.*$" ""))
                 server       (nth (re-find #"http://([a-zA-Z0-9.]+)/([a-zA-Z0-9.]+)/?$" board-url) 1)
                 board        (nth (re-find #"http://([a-zA-Z0-9.]+)/([a-zA-Z0-9.]+)/?$" board-url) 2)
                 service      (server-to-service server)
                 display-name (str board-name " [" service "]")]
-            ; (timbre/debug service server board)
+            ; (log :debug service server board)
             (db/update-board-server service server board)
             (if (nil? (:board-name (db/get-board-info service board)))
               (db/update-board-name service server board board-name)) ; TODO: Use SETTINGS.TXT instead.
@@ -219,7 +218,7 @@
         nil)
 
       ; Update board information in the background.
-      (do (future (doall (pmap #(try (get-bbs-menu-content %1) (catch Throwable t))
+      (do (future (doall (pmap #(try (get-bbs-menu-content %1) (catch Throwable _))
                                (list "http://menu.2ch.sc/bbsmenu.html"
                                      "http://menu.2ch.net/bbsmenu.html"
                                      "http://open2ch.net/menu/pc_menu.html"))))

@@ -244,7 +244,7 @@
 (defn get-encoding-for-get-method
   ^String
 [^String server]
-  ; (timbre/debug url)
+  ; (log :debug url)
   (cond
     (shitaraba-server? server)
     "EUC-JP"
@@ -254,7 +254,7 @@
 (defn get-encoding-for-post-method
   ^String
 [^String server]
-  ; (timbre/debug url)
+  ; (log :debug url)
   (cond
     (shitaraba-server? server)
     "EUC-JP"
@@ -264,7 +264,7 @@
 (defn get-options-for-get-method
   ^clojure.lang.IPersistentMap
 [^String url]
-  ; (timbre/debug url)
+  ; (log :debug url)
   (let [headers {"User-Agent"    user-agent
                  "Cache-Control" "no-cache"}
         options {:headers        headers
@@ -318,14 +318,14 @@
       (str "http://" server "/" board "/kako/" (subs thread 0 3) "/" thread ".dat" (if add-gz ".gz" "")))))
 
 (defn to-url-encoded-string [s & [encoding]]
-  ; (timbre/debug s)
+  ; (log :debug s)
   (let [encoding (or encoding "UTF-8")]
     (apply str (for [ch (.getBytes (str s) encoding)] (format "%%%02X" ch)))))
 
 (defn get-subject-txt
   [^String board-url
    ^Boolean refresh]
-  ; (timbre/debug "get-subject-txt:" board-url)
+  ; (log :debug "get-subject-txt:" board-url)
   (try
     (let [{:keys [server service board]} (split-board-url board-url)
           board-info (db/get-board-info service board)
@@ -337,46 +337,46 @@
                      (<= (- now (get-time (:time-subject-txt-retrieved board-info)))
                          wait-time-for-downloading-subject-txt)))
           (do
-            ; (timbre/info "Retrieved from cache:" subject-txt-url)
+            ; (log :info "Retrieved from cache:" subject-txt-url)
             (:subject-txt board-info))
           (let [response (clj-http.client/get subject-txt-url (get-options-for-get-method board-url))]
             (if (or (not (= (:status response) 200))
                     (< 1 (count (:trace-redirects response))))
               (do
-                ; (timbre/info "Retrieved from cache:" subject-txt-url)
+                ; (log :info "Retrieved from cache:" subject-txt-url)
                 (:subject-txt board-info))
               (do
                 (db/update-subject-txt service server board (:body response))
-                ; (timbre/info "Downloaded:" subject-txt-url
+                ; (log :info "Downloaded:" subject-txt-url
                 ;              now
                 ;              (.getTime (:time-subject-txt-retrieved board-info))
                 ;              (- now (.getTime (:time-subject-txt-retrieved board-info)))
                 ;              wait-time-for-downloading-subject-txt)
                 (:body response)))))
         (catch Throwable _
-          ; (timbre/debug "get-subject-txt: Unexpected Exception:" (str t) board-url)
-          ; (timbre/debug "get-subject-txt: Returning (:subject-txt board-info)")
+          ; (log :debug "get-subject-txt: Unexpected Exception:" (str t) board-url)
+          ; (log :debug "get-subject-txt: Returning (:subject-txt board-info)")
           (:subject-txt board-info))))
     (catch Throwable _
-      ; (timbre/debug "get-subject-txt: Unexpected Exception:" (str t) board-url)
-      ; (timbre/debug "get-subject-txt: Returning nil")
+      ; (log :debug "get-subject-txt: Unexpected Exception:" (str t) board-url)
+      ; (log :debug "get-subject-txt: Returning nil")
       nil)))
 
 (defn is-thread-active?
   [server board thread-no]
-  ; (timbre/debug "    is-thread-active?:" server board thread-no)
+  ; (log :debug "    is-thread-active?:" server board thread-no)
   (try
     (let [board-url (create-board-url server board)
           subject-txt (get-subject-txt board-url true)
           thread-no-list (map #(clojure.string/replace %1 #"\.(dat<>|cgi,).*$" "")
                               (clojure.string/split subject-txt #"\n"))
-          ; _ (timbre/debug "subject-txt:" subject-txt)
-          ; _ (timbre/debug "    thread-no-list:" (count thread-no-list))
+          ; _ (log :debug "subject-txt:" subject-txt)
+          ; _ (log :debug "    thread-no-list:" (count thread-no-list))
           result      (boolean (or (nil? subject-txt) (some #(= %1 (str thread-no)) thread-no-list)))]
-      ; (timbre/debug "    is-thread-active?:" result)
+      ; (log :debug "    is-thread-active?:" result)
       result)
     (catch Throwable _
-      ; (timbre/error "    is-thread-active?: Unexpected Exception:" (str t) server board thread-no)
+      ; (log :error "    is-thread-active?: Unexpected Exception:" (str t) server board thread-no)
       ; (print-stack-trace t)
       true)))
 

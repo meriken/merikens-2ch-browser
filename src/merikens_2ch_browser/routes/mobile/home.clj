@@ -36,8 +36,6 @@
             [noir.validation :refer [rule errors? has-value? on-error]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-css include-js]]
-            [hiccup.form :refer :all]
-            [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
             [taoensso.timbre :refer [log]]
             [clj-time.core]

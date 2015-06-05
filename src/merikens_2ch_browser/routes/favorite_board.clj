@@ -37,13 +37,12 @@
             [noir.validation :refer [rule errors? has-value? on-error]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-css include-js]]
-            [hiccup.form :refer :all]
-            [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre :refer [log]]
+            [taoensso.timbre :refer [log]]
             [clj-time.core]
             [clj-time.coerce]
             [clj-time.format]
+            [merikens-2ch-browser.cursive :refer :all]
             [merikens-2ch-browser.layout :as layout]
             [merikens-2ch-browser.util :refer :all]
             [merikens-2ch-browser.param :refer :all]
@@ -56,7 +55,7 @@
 
 (defn count-new-posts-and-threads-in-board
   [board-url refresh]
-  ; (timbre/debug "count-new-posts-and-threads-in-board:" board-url without-refresh)
+  ; (log :debug "count-new-posts-and-threads-in-board:" board-url without-refresh)
   (let [{:keys [server service board]} (split-board-url board-url)
         body (get-subject-txt board-url refresh)
         all-items (clojure.string/split body #"\n")
@@ -82,7 +81,7 @@
                           (if bookmark
                             (db/update-thread-res-count service server board (java.lang.Long/parseLong thread-no) res-count))
                           {:new-threads (if new-thread? 1 0), :new-posts new-res-count})
-                        (catch Throwable t
+                        (catch Throwable _
                           {:new-threads 0, :new-posts 0})))]
         {:new-threads (apply + (map :new-threads results))
          :new-posts   (apply + (map :new-posts results))}))))
@@ -126,7 +125,7 @@
                                                                       (if (> new-posts 0) "non-zero " "")
                                                                       new-post-count-class)}
                                                     new-posts])]))))
-         (catch Throwable t
+         (catch Throwable _
            (escape-html board-name-plus)))]
       [:script
        "$(document).ready(function() {"
@@ -175,7 +174,7 @@
 
 (defn api-get-favorite-board-list
   [bubbles refresh]
-  ; (timbre/debug "api-get-favorite-board-list")
+  ; (log :debug "api-get-favorite-board-list")
   (if (not (check-login))
     (html [:script "open('/login', '_self');"])
     (try
@@ -190,15 +189,15 @@
         (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
         (decrement-http-request-count)
         result)
-      (catch Throwable t
+      (catch Throwable _
         (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
         (decrement-http-request-count)
         "お気に板の取得に失敗しました。"))))
 
 (defn api-add-favorite-board
   [board-url]
-  ; (timbre/debug "api-add-favorite-board")
-  ; (timbre/debug board-url)
+  ; (log :debug "api-add-favorite-board")
+  ; (log :debug board-url)
   (if (not (check-login))
     (ring.util.response/not-found "404 Not Found")
     (let
@@ -216,8 +215,8 @@
 
 (defn api-remove-favorite-board
   [board-url]
-  ; (timbre/debug "api-remove-favorite-board")
-  ; (timbre/debug board-url)
+  ; (log :debug "api-remove-favorite-board")
+  ; (log :debug board-url)
   (when (check-login)
     (let
       [board-url-parts (re-find #"^http://([a-z0-9.]+)/(.*)/$" board-url)
@@ -261,7 +260,7 @@
   (when (check-login)
     (let
       [favorite-boards (move-element-in-list (db/get-favorite-boards) (Integer/parseInt old-position) (Integer/parseInt new-position))]
-      (timbre/debug favorite-boards)
+      (log :debug favorite-boards)
       (db/delete-all-favorite-boards)
       (doall
         (for [favorite-board favorite-boards]
@@ -270,7 +269,7 @@
 
 (defn board-name-page
   [board-url service server board]
-  ; (timbre/debug "board-name-page")
+  ; (log :debug "board-name-page")
   (when (check-login)
     (layout/popup-window
       (list
@@ -287,7 +286,7 @@
 
 (defn handle-board-name
   [service server board name]
-  ; (timbre/debug "handle-board-name")
+  ; (log :debug "handle-board-name")
   (try
     (if (not (check-login))
       (redirect "/login")
@@ -300,7 +299,7 @@
            "opener.loadFavoriteBoardList(true);"
            "close();"])))
 
-    (catch Throwable t
+    (catch Throwable _
       (redirect "/board-name-page?error=1"))))
 
 (defroutes favorite-board-routes

@@ -38,18 +38,15 @@
             [noir.validation :refer [rule errors? has-value? on-error]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-css include-js]]
-            [hiccup.form :refer :all]
-            [hiccup.element :refer :all]
-            [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre :refer [log]]
+            [taoensso.timbre :refer [log]]
             [clj-http.client :as client]
-            [pandect.algo.sha256 :refer :all]
             [clj-time.core]
             [clj-time.coerce]
             [clj-time.format]
             [clj-time.predicates]
             ; [cheshire.core]
             [clj-json.core]
+            [merikens-2ch-browser.cursive :refer :all]
             [merikens-2ch-browser.util :refer :all]
             [merikens-2ch-browser.param :refer :all]
             [merikens-2ch-browser.url :refer :all]
@@ -62,7 +59,7 @@
 
 (defn convert-message-in-post-into-plain-text
   [text]
-  ; (timbre/debug text)
+  ; (log :debug text)
   (if (nil? text)
     ""
     (-> text
@@ -102,47 +99,15 @@
        :tripcode                                (unescape-html-entities (remove-html-tags (nth (clojure.string/split after-handle #" *<b> *") 0)))
        :cap           (remove-ng-words-from-cap (unescape-html-entities (remove-html-tags (nth (clojure.string/split after-handle #" *<b> *") 1 ""))))})
     (catch Throwable t
-      (timbre/debug "split-name-field:" (str t))
+      (log :debug "split-name-field:" (str t))
       (print-stack-trace t)
       nil)))
 
-(defn convert-post-in-dat-to-html　[post precomputed-index context]
-  (let [thread-url    (:thread-url context)
-        {:keys [service server board thread]} context
-        delta         (if (or (:shitaraba? context) (:machi-bbs? context)) 1 0)
-        items         (clojure.string/split post #"<>")
-        index         (if (or (:shitaraba? context) (:machi-bbs? context)) (Integer/parseInt (first items)) precomputed-index)
-        special-color (nth (re-find #"<font color=#([0-9A-Fa-f]+)>" (nth items delta))
-                           1
-                           nil)
-        {:keys [handle-or-cap tripcode cap]} (split-name-field (nth items delta))
-        email         (unescape-html-entities (remove-html-tags (nth items (+ 1 delta) nil)))
-        etc           (unescape-html-entities (remove-html-tags (nth items (+ 2 delta) nil)))
-        etc           (cond
-                        (and (:shitaraba? context)
-                             (pos? (count (nth items (+ 5 delta) nil))))
-                        (str etc " ID:" (nth items (+ 5 delta) nil))
-
-                        (and (or (:machi-bbs? context))
-                             (pos? (count (nth items (+ 5 delta) nil))))
-                        (str etc " [" (nth items (+ 5 delta) nil) "]")
-
-                        :else
-                        etc)
-        message       (convert-message-in-post-into-plain-text (nth items (+ 3 delta) nil))]
-    (if (or ((:display-post-fn context) index)
-            (some #{index} (:posts-to-keep context)))
-      ((:convert-raw-post-to-html context) index handle-or-cap tripcode cap email etc message special-color context))))
-
-(defn get-res-count-for-dat-file
-  [dat-file]
-  (count (re-seq #"\n" (new String (:content dat-file) (get-encoding-for-get-method (:server dat-file))))))
-
 (defn download-entire-dat-file-through-net-api
   [context]
-  ; (timbre/debug "download-entire-dat-file-through-net-api")
+  ; (log :debug "download-entire-dat-file-through-net-api")
   (let [start-time (System/nanoTime)
-        {:keys [service server original-server current-server board thread-no]} context
+        {:keys [service server original-server board thread-no]} context
         current-time (quot (System/currentTimeMillis) 1000)
         ronin?     (= (db/get-user-setting "use-ronin") "true")
         session-id (clojure.string/replace (:body (client/post "https://api.2ch.net/v1/auth/"
@@ -193,13 +158,13 @@
           (if old-dat-file
             (db/delete-dat-file service board thread-no))
           (db/add-dat-file new-dat-file))
-        (timbre/info (str "    Downloaded DAT file through API (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms, " (count (:body response)) " bytes)."))
+        (log :info (str "    Downloaded DAT file through API (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms, " (count (:body response)) " bytes)."))
         dat-content))))
 
 (defn download-entire-dat-file-from-specific-server
   [dat-url context]
-  ; (timbre/debug "download-entire-dat-file-from-specific-server: " dat-url)
-  (let [{:keys [service server original-server current-server board thread-no]} context
+  ; (log :debug "download-entire-dat-file-from-specific-server: " dat-url)
+  (let [{:keys [service server original-server board thread-no]} context
         options     {:as :byte-array
                      :socket-timeout 60000
                      :conn-timeout   60000
@@ -212,7 +177,7 @@
         rokka-magic-string-length (count "Success Archive\n")
         res-count   (count (re-seq #"\n" dat-content))
         res-count   (if rokka? (dec res-count) res-count)]
-    (timbre/debug "download-entire-dat-file-from-specific-server: res-count:" res-count)
+    (log :debug "download-entire-dat-file-from-specific-server: res-count:" res-count)
     (if (or (not (= (:status response) 200))
             (< 1 (count (:trace-redirects response)))
             (not (valid-dat-content? dat-content)))
@@ -243,28 +208,28 @@
 
 (defn download-entire-current-dat-file
   [context]
-  ; (timbre/debug "download-entire-current-dat-file")
+  ; (log :debug "download-entire-current-dat-file")
   (let [start-time (System/nanoTime)
-        {:keys [service original-server board thread-no thread-url]} context
+        {:keys [thread-url]} context
         dat-url (thread-url-to-dat-url thread-url)]
     (try
-      ; (timbre/debug "download-entire-current-dat-file: Downloading:" dat-url)
+      ; (log :debug "download-entire-current-dat-file: Downloading:" dat-url)
       (let [result (download-entire-dat-file-from-specific-server dat-url context)]
-        (timbre/info (str "    Downloaded current DAT file (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
+        (log :info (str "    Downloaded current DAT file (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
         result)
 
       (catch Throwable t
-        ; (timbre/debug "download-entire-current-dat-file: Download failed:" dat-url)
-        (timbre/info (str "    Failed to download current DAT file (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
+        ; (log :debug "download-entire-current-dat-file: Download failed:" dat-url)
+        (log :info (str "    Failed to download current DAT file (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
         (throw t)))))
 
 (defn download-entire-archived-dat-file
   "Try to download every archived dat file available.
 The most recent version will (hopefully) be stored in the database."
   [context]
-  ; (timbre/debug "download-entire-archived-dat-file")
+  ; (log :debug "download-entire-archived-dat-file")
   (let [start-time (System/nanoTime)
-        {:keys [service original-server board thread-no thread-url]} context
+        {:keys [service board thread-no thread-url]} context
         locations (list [(thread-url-to-kako-dat-url thread-url true)  true]     ; kako log with ".gz"
                         [(thread-url-to-kako-dat-url thread-url false) true]     ; kako log without ".gz"
                         ; [(thread-url-to-offlaw2-dat-url thread-url)    false]    ; offlaw2
@@ -275,37 +240,38 @@ The most recent version will (hopefully) be stored in the database."
 
         results (cp/pmap :builtin
                          #(let [dat-url %1
-                                mark-as-archived? %2]
+                                ; mark-as-archived? %2
+                                ]
                             (try
                               (if (nil? dat-url)
                                 (throw (Exception.)))
                               (download-entire-dat-file-from-specific-server dat-url context)
                               ; (when mark-as-archived?
                               ;  (db/mark-thread-as-archived service original-server board thread-no)
-                              ; (timbre/debug "download-entire-archived-dat-file: mark-as-archived? true" (str "(url: " dat-url ")"))
+                              ; (log :debug "download-entire-archived-dat-file: mark-as-archived? true" (str "(url: " dat-url ")"))
                               ;  )
-                              ; (timbre/debug "download-entire-archived-dat-file: Download succeeded:" dat-url)
+                              ; (log :debug "download-entire-archived-dat-file: Download succeeded:" dat-url)
                               true
-                              (catch Throwable t
-                                ; (timbre/debug "download-entire-archived-dat-file: Download failed:" dat-url)
+                              (catch Throwable _
+                                ; (log :debug "download-entire-archived-dat-file: Download failed:" dat-url)
                                 false)))
                          (map first locations)
                          (map second locations))
 
         found-one (< 0 (count (remove not results)))]
 
-    ; (timbre/debug "found-one:" found-one)
+    ; (log :debug "found-one:" found-one)
     (if (not found-one)
       (throw (Exception.)))
-    (timbre/info (str "    Downloaded archived DAT file (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
+    (log :info (str "    Downloaded archived DAT file (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
     (:content (db/get-dat-file service board thread-no))))
 
 (defn update-dat-file-through-net-api
   [context]
-  ; (timbre/debug "update-dat-file")
+  ; (log :debug "update-dat-file")
   (let [start-time (System/nanoTime)
-        {:keys [service server board thread thread-no thread-url]} context
-        dat-url              (thread-url-to-dat-url thread-url)
+        {:keys [service server board thread thread-no]} context
+        ; dat-url              (thread-url-to-dat-url thread-url)
         dat-file-in-database (db/get-dat-file service board thread)]
     (try
       (let [current-time (quot (System/currentTimeMillis) 1000)
@@ -351,7 +317,7 @@ The most recent version will (hopefully) be stored in the database."
           (if (and (= status 206) (not (= (first (:body response)) 10)))
             (download-entire-current-dat-file context) ; あぼ－ん
             (do
-              ; (timbre/debug "update-dat-file: res-count:" res-count)
+              ; (log :debug "update-dat-file: res-count:" res-count)
               (db/update-dat-file
                 service
                 board
@@ -361,31 +327,31 @@ The most recent version will (hopefully) be stored in the database."
                 new-content
                 (count new-content)
                 res-count)
-              (timbre/info (str "    Updated DAT file through API (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms, " (count (:body response)) " bytes)."))
+              (log :info (str "    Updated DAT file through API (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms, " (count (:body response)) " bytes)."))
               converted))))
       (catch Throwable t
         (cond
           ; not modified
           (= (str "clj-http: status 304"))
           (do
-            ; (timbre/debug "status: 304")
-            (timbre/info (str "    DAT file is up-to-date (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
+            ; (log :debug "status: 304")
+            (log :info (str "    DAT file is up-to-date (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
             (new String (:content dat-file-in-database) (get-encoding-for-get-method server)))
           ; あぼーん
           (= (str "clj-http: status 416"))
           (do
-            ; (timbre/debug "status: 416")
-            (timbre/info (str "    Failed to update DAT file through API (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
+            ; (log :debug "status: 416")
+            (log :info (str "    Failed to update DAT file through API (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
             (download-entire-current-dat-file context))
           :else
           (do
-            (timbre/debug (str t))
-            (timbre/info (str "    Failed to update DAT file through API (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
+            (log :debug (str t))
+            (log :info (str "    Failed to update DAT file through API (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
             (download-entire-current-dat-file context)))))))
 
 (defn update-dat-file
   [context]
-  ; (timbre/debug "update-dat-file")
+  ; (log :debug "update-dat-file")
   (let [start-time (System/nanoTime)
         {:keys [service server board thread thread-url]} context
         dat-url              (thread-url-to-dat-url thread-url)
@@ -419,7 +385,7 @@ The most recent version will (hopefully) be stored in the database."
           (if (and (= status 206) (not (= (first (:body response)) 10)))
             (download-entire-current-dat-file context) ; あぼ－ん
             (do
-              ; (timbre/debug "update-dat-file: res-count:" res-count)
+              ; (log :debug "update-dat-file: res-count:" res-count)
               (db/update-dat-file
                 service
                 board
@@ -429,31 +395,31 @@ The most recent version will (hopefully) be stored in the database."
                 new-content
                 (count new-content)
                 res-count)
-              (timbre/info (str "    Updated DAT file (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms, " (count new-content) " bytes)."))
+              (log :info (str "    Updated DAT file (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms, " (count new-content) " bytes)."))
               converted))))
       (catch Throwable t
         (cond
           ; not modified
           (= (str "clj-http: status 304"))
           (do
-            ; (timbre/debug "status: 304")
-            (timbre/info (str "    DAT file is up-to-date (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
+            ; (log :debug "status: 304")
+            (log :info (str "    DAT file is up-to-date (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
             (new String (:content dat-file-in-database) (get-encoding-for-get-method server)))
           ; あぼーん
           (= (str "clj-http: status 416"))
           (do
-            ; (timbre/debug "status: 416")
-            (timbre/info (str "    Failed to update DAT file (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
+            ; (log :debug "status: 416")
+            (log :info (str "    Failed to update DAT file (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
             (download-entire-current-dat-file context))
           :else
           (do
-            (timbre/debug (str t))
-            (timbre/info (str "    Failed to update DAT file (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
+            (log :debug (str t))
+            (log :info (str "    Failed to update DAT file (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
             (download-entire-current-dat-file context)))))))
 
 (defn generate-display-post-fn
   [context res-count]
-  ; (timbre/debug "generate-display-post-fn:" res-count)
+  ; (log :debug "generate-display-post-fn:" res-count)
   (let [options   (:thread-options context)
         options   (if (>= 0 (count options)) "1-" options)
         parts     (clojure.string/split options #"[,+]")
@@ -543,24 +509,56 @@ The most recent version will (hopefully) be stored in the database."
                                              (for [post posts-to-keep]
                                                (remove #(not (= (:to %1) post)) references))))
                               result (distinct (concat posts-to-keep to-list from-list))]
-                          ; (timbre/debug "posts-to-keep" posts-to-keep)
-                          ; (timbre/debug to-list)
-                          ; (timbre/debug from-list)
-                          ; (timbre/debug result)
+                          ; (log :debug "posts-to-keep" posts-to-keep)
+                          ; (log :debug to-list)
+                          ; (log :debug from-list)
+                          ; (log :debug result)
                           (if (= (set result) (set posts-to-keep))
                            result
                             (recur result))
                           ))]
 
-   ; (timbre/debug posts-to-keep)
+   ; (log :debug posts-to-keep)
     posts-to-keep))
+
+(def convert-post-in-dat-to-html
+  (fn [post precomputed-index context]
+    (let [; thread-url    (:thread-url context)
+          delta         (if (or (:shitaraba? context) (:machi-bbs? context)) 1 0)
+          items         (clojure.string/split post #"<>")
+          index         (if (or (:shitaraba? context) (:machi-bbs? context)) (Integer/parseInt (first items)) precomputed-index)
+          special-color (nth (re-find #"<font color=#([0-9A-Fa-f]+)>" (nth items delta))
+                             1
+                             nil)
+          {:keys [handle-or-cap tripcode cap]} (split-name-field (nth items delta))
+          email         (unescape-html-entities (remove-html-tags (nth items (+ 1 delta) nil)))
+          etc           (unescape-html-entities (remove-html-tags (nth items (+ 2 delta) nil)))
+          etc           (cond
+                          (and (:shitaraba? context)
+                               (pos? (count (nth items (+ 5 delta) nil))))
+                          (str etc " ID:" (nth items (+ 5 delta) nil))
+
+                          (and (or (:machi-bbs? context))
+                               (pos? (count (nth items (+ 5 delta) nil))))
+                          (str etc " [" (nth items (+ 5 delta) nil) "]")
+
+                          :else
+                          etc)
+          message       (convert-message-in-post-into-plain-text (nth items (+ 3 delta) nil))]
+      (if (or ((:display-post-fn context) index)
+              (some #{index} (:posts-to-keep context)))
+        ((:convert-raw-post-to-html context) index handle-or-cap tripcode cap email etc message special-color context)))))
+
+(comment defn get-res-count-for-dat-file
+  [dat-file]
+  (count (re-seq #"\n" (new String (:content dat-file) (get-encoding-for-get-method (:server dat-file))))))
 
 (defn process-thread-in-dat-format
   [dat-content context]
-  ; (timbre/debug "process-thread-in-dat-format: Calling convert-post-in-dat-to-html.")
+  ; (log :debug "process-thread-in-dat-format: Calling convert-post-in-dat-to-html.")
   (let
     [start-time (System/nanoTime)
-     {:keys [service server board thread thread-url]} context
+     {:keys [service server board thread]} context
      posts         (clojure.string/split dat-content #"\n")
      title         (nth (clojure.string/split (first posts) #"<>")
                         (if (or (:shitaraba? context) (:machi-bbs? context)) 5 4)
@@ -571,7 +569,7 @@ The most recent version will (hopefully) be stored in the database."
      res-count     (if (or (:shitaraba? context) (:machi-bbs? context))
                      (Integer/parseInt (first (clojure.string/split (last posts) #"<>")))
                      (count posts))
-     ; _             (timbre/debug "res-count:" res-count)
+     ; _             (log :debug "res-count:" res-count)
      display-post-fn (generate-display-post-fn context res-count)
      posts-in-html (if (:count-posts context)
                      nil
@@ -587,15 +585,15 @@ The most recent version will (hopefully) be stored in the database."
                                    (assoc :display-post-fn display-post-fn)
                                    (assoc :posts-to-keep   (determine-which-posts-to-keep posts res-count display-post-fn context))
                                    )))))]
-    ; (timbre/debug "process-thread-in-dat-format: Calls to convert-post-in-dat-to-html are done.")
+    ; (log :debug "process-thread-in-dat-format: Calls to convert-post-in-dat-to-html are done.")
     (db/update-thread-title service server board thread title)
     (db/update-thread-res-count service server board thread res-count)
-    (timbre/info (str "    Processed DAT file (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
+    (log :info (str "    Processed DAT file (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
     posts-in-html))
 
 (defn get-posts-in-current-dat-file
   [context]
-  ; (timbre/debug "get-posts-in-current-dat-file")
+  ; (log :debug "get-posts-in-current-dat-file")
   (let [{:keys [service server board thread]} context
         dat-file-in-database  (db/get-dat-file service board thread)
         dat-content           (if (and (or (net-server? server) (bbspink-server? server)) use-net-api)
@@ -611,7 +609,7 @@ The most recent version will (hopefully) be stored in the database."
 
         thread-info           (db/get-thread-info service board thread)
         retry?                (and dat-file-in-database thread-info (> (:res-count thread-info) res-count))
-        ;_                     (timbre/debug "get-posts-in-current-dat-file: retry?" retry?)
+        ;_                     (log :debug "get-posts-in-current-dat-file: retry?" retry?)
         dat-content           (if retry?
                                 (if (and (net-server? server) use-net-api)
                                   (download-entire-dat-file-through-net-api context)
@@ -621,9 +619,9 @@ The most recent version will (hopefully) be stored in the database."
 
 (defn get-posts-in-archived-dat-file
   [context]
-  ; (timbre/debug "get-posts-in-archived-dat-file")
-  (let [{:keys [service server board thread]} context
-        dat-file-in-database  (db/get-dat-file service board thread)
+  ; (log :debug "get-posts-in-archived-dat-file")
+  (let [{:keys [server]} context
+        ; dat-file-in-database  (db/get-dat-file service board thread)
         dat-content           (new String
                                    (if (and (net-server? server) use-net-api)
                                      (download-entire-dat-file-through-net-api context)
@@ -631,25 +629,26 @@ The most recent version will (hopefully) be stored in the database."
                                    (get-encoding-for-get-method server))]
     (process-thread-in-dat-format dat-content context)))
 
-(defn convert-post-from-read-cgi-to-html　[post context]
-  (let [res-count (:res-count context)
-        thread-url (:thread-url context)
-        {:keys [service server board thread]} context
+(def convert-post-from-read-cgi-to-html
+  (fn [post context]
+    (let [; res-count (:res-count context)
+          ; thread-url (:thread-url context)
+          ; {:keys [service server board thread]} context
 
-        items         (clojure.string/split post #"<dd>")
-        subitems      (clojure.string/split (first items) #"( ：(<a href=\"mailto:.*\">|<a href=\"/cdn-cgi/l/email-protection#[a-z0-9]+\">|<font color=green>)<b>)|(</b>(</font>|</a>))：")
+          items         (clojure.string/split post #"<dd>")
+          subitems      (clojure.string/split (first items) #"( ：(<a href=\"mailto:.*\">|<a href=\"/cdn-cgi/l/email-protection#[a-z0-9]+\">|<font color=green>)<b>)|(</b>(</font>|</a>))：")
 
-        split-name    (clojure.string/split (nth subitems 1 "") #" *</?b> *")
-        special-color (second (re-find #"<font color=#([0-9A-Fa-f]+)>" (first split-name)))
-        handle-or-cap (remove-ng-words-from-cap (unescape-html-entities (remove-html-tags (nth split-name 0 ""))))
-        tripcode                                (unescape-html-entities (remove-html-tags (nth split-name 1 "")))
-        cap           (remove-ng-words-from-cap (unescape-html-entities (remove-html-tags (nth split-name 2 ""))))
+          split-name    (clojure.string/split (nth subitems 1 "") #" *</?b> *")
+          special-color (second (re-find #"<font color=#([0-9A-Fa-f]+)>" (first split-name)))
+          handle-or-cap (remove-ng-words-from-cap (unescape-html-entities (remove-html-tags (nth split-name 0 ""))))
+          tripcode                                (unescape-html-entities (remove-html-tags (nth split-name 1 "")))
+          cap           (remove-ng-words-from-cap (unescape-html-entities (remove-html-tags (nth split-name 2 ""))))
 
-        index         (Integer/parseInt (first subitems))
-        email         (unescape-html-entities (remove-html-tags (second (re-find #"<a href=\"mailto:([^\"]*)\"><b>" (first items)))))
-        etc           (unescape-html-entities (remove-html-tags (nth subitems 2 "")))
-        message       (convert-message-in-post-into-plain-text (second items))]
-    ((:convert-raw-post-to-html context) index handle-or-cap tripcode cap email etc message special-color context)))
+          index         (Integer/parseInt (first subitems))
+          email         (unescape-html-entities (remove-html-tags (second (re-find #"<a href=\"mailto:([^\"]*)\"><b>" (first items)))))
+          etc           (unescape-html-entities (remove-html-tags (nth subitems 2 "")))
+          message       (convert-message-in-post-into-plain-text (second items))]
+      ((:convert-raw-post-to-html context) index handle-or-cap tripcode cap email etc message special-color context))))
 
 (defn process-thread-in-html
   [html-body context]
@@ -662,7 +661,7 @@ The most recent version will (hopefully) be stored in the database."
         thread-body (second (re-find #"(?s)<dl class=\"thread\"[^>]*>\n<dt>(.*)<br><br>\n</dl>" html-body))
         posts (clojure.string/split thread-body #"<br><br>\n<dt>")
         res-count (count posts)
-        ; _ (timbre/debug "res-count:" res-count)
+        ; _ (log :debug "res-count:" res-count)
         processed-posts (if (:count-posts context)
                           (repeat res-count "")
                           (doall
@@ -678,7 +677,7 @@ The most recent version will (hopefully) be stored in the database."
     (db/update-thread-res-count service server board thread res-count)
     (if (re-find #"<div[^>]*>■ このスレッドは過去ログ倉庫に格納されています</div>" html-body)
       (db/mark-thread-as-archived service server board thread))
-    (timbre/info (str "    Processed html page (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
+    (log :info (str "    Processed html page (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
     processed-posts))
 
 (defn get-posts-through-read-cgi
@@ -693,7 +692,7 @@ The most recent version will (hopefully) be stored in the database."
                                    "User-Agent"
                                    (ring.util.response/get-header noir.request/*request* "user-agent")))
                      options)
-        ; _ (timbre/debug (str options))
+        ; _ (log :debug (str options))
         response-first-try (clj-http.client/get source-url options)
         retry? (re-find #"error 3001</title>" (:body response-first-try))
         server (if retry? original-server server)
@@ -721,46 +720,47 @@ The most recent version will (hopefully) be stored in the database."
                                   :source_url source-url}))
         processed-thread))))
 
-(defn convert-post-in-json-to-html　[post context]
-  (let [res-count (:res-count context)
-        thread-url (:thread-url context)
-        {:keys [service server board thread]} context
+(def convert-post-in-json-to-html
+  (fn [post context]
+    (let [; res-count (:res-count context)
+          ; thread-url (:thread-url context)
+          ; {:keys [service server board thread]} context
 
-        split-name    (re-find #"^(([^◆★]+)?)((◆[A-Za-z0-9./+]+)?)[ \t]*(([^★]+★[^★]*)?)[ \t]*$" (nth post 1 ""))
-        handle-or-cap (remove-ng-words-from-cap (unescape-html-entities (remove-html-tags (nth split-name 1 ""))))
-        tripcode                                (unescape-html-entities (remove-html-tags (nth split-name 3 "")))
-        cap           (remove-ng-words-from-cap (unescape-html-entities (remove-html-tags (nth split-name 5 ""))))
-        special-color (second (re-find #"<font color=#([0-9A-Fa-f]+)>" (nth post 1 "")))
-        ; _             (timbre/debug "split-name:   " split-name)
-        ; _             (timbre/debug "handle-or-cap:" split-name)
-        ; _             (timbre/debug "tripcode:     " tripcode)
-        ; _             (timbre/debug "cap:          " cap)
+          split-name    (re-find #"^(([^◆★]+)?)((◆[A-Za-z0-9./+]+)?)[ \t]*(([^★]+★[^★]*)?)[ \t]*$" (nth post 1 ""))
+          handle-or-cap (remove-ng-words-from-cap (unescape-html-entities (remove-html-tags (nth split-name 1 ""))))
+          tripcode                                (unescape-html-entities (remove-html-tags (nth split-name 3 "")))
+          cap           (remove-ng-words-from-cap (unescape-html-entities (remove-html-tags (nth split-name 5 ""))))
+          special-color (second (re-find #"<font color=#([0-9A-Fa-f]+)>" (nth post 1 "")))
+          ; _             (log :debug "split-name:   " split-name)
+          ; _             (log :debug "handle-or-cap:" split-name)
+          ; _             (log :debug "tripcode:     " tripcode)
+          ; _             (log :debug "cap:          " cap)
 
-        index         (nth post 0 1)
-        email         (unescape-html-entities (remove-html-tags (nth post 2 "")))
-        id            (nth post 4 nil)
-        be            (nth post 5 nil)
-        _             (if (zero? (nth post 3 0)) ; http://anago.2ch.sc/test/read.cgi/software/1421383668/555-556
-                        (throw (Exception. "Invalid timestamp.")))
-        timestamp     (clj-time.core/to-time-zone
+          index         (nth post 0 1)
+          email         (unescape-html-entities (remove-html-tags (nth post 2 "")))
+          id            (nth post 4 nil)
+          be            (nth post 5 nil)
+          _             (if (zero? (nth post 3 0)) ; http://anago.2ch.sc/test/read.cgi/software/1421383668/555-556
+                          (throw (Exception. "Invalid timestamp.")))
+          timestamp     (clj-time.core/to-time-zone
                           (clj-time.coerce/from-long (* (nth post 3 0) 1000))
                           (clj-time.core/time-zone-for-offset +9))
-        etc           (str
-                        (clj-time.format/unparse (clj-time.format/formatter-local "yyyy/MM/dd(") timestamp)
-                        (case (clj-time.core/day-of-week timestamp)
-                          1 "月"
-                          2 "火"
-                          3 "水"
-                          4 "木"
-                          5 "金"
-                          6 "土"
+          etc           (str
+                          (clj-time.format/unparse (clj-time.format/formatter-local "yyyy/MM/dd(") timestamp)
+                          (case (clj-time.core/day-of-week timestamp)
+                            1 "月"
+                            2 "火"
+                            3 "水"
+                            4 "木"
+                            5 "金"
+                            6 "土"
                             "日")
-                        (clj-time.format/unparse (clj-time.format/formatter-local ") HH:mm:ss") timestamp))
-        etc           (if (pos? (count id)) (str etc " ID:" id) etc)
-        etc           (if (pos? (count be)) (str etc " BE:" be) etc)
-        etc           (unescape-html-entities (remove-html-tags etc))
-        message       (convert-message-in-post-into-plain-text (nth post 6 ""))]
-    ((:convert-raw-post-to-html context) index handle-or-cap tripcode cap email etc message special-color context)))
+                          (clj-time.format/unparse (clj-time.format/formatter-local ") HH:mm:ss") timestamp))
+          etc           (if (pos? (count id)) (str etc " ID:" id) etc)
+          etc           (if (pos? (count be)) (str etc " BE:" be) etc)
+          etc           (unescape-html-entities (remove-html-tags etc))
+          message       (convert-message-in-post-into-plain-text (nth post 6 ""))]
+      ((:convert-raw-post-to-html context) index handle-or-cap tripcode cap email etc message special-color context))))
 
 (defn process-thread-in-json
   [response-body-clj context]
@@ -770,8 +770,8 @@ The most recent version will (hopefully) be stored in the database."
         res-count (get response-body-clj "total_count")
         posts     (get response-body-clj "comments")
         title     (unescape-html-entities (nth (get response-body-clj "thread") 5 ""))
-        ; _ (timbre/debug (str "res-count: " res-count))
-        ; _ (timbre/debug (str "title: " title))
+        ; _ (log :debug (str "res-count: " res-count))
+        ; _ (log :debug (str "title: " title))
         ; _ (throw (Exception. "Not a valid JSON response."))
 
         processed-posts (if (:count-posts context)
@@ -787,7 +787,7 @@ The most recent version will (hopefully) be stored in the database."
                                         (assoc :display-post-fn (generate-display-post-fn context res-count)))))))]
     (db/update-thread-title service server board thread-no title)
     (db/update-thread-res-count service server board thread-no res-count)
-    (timbre/info (str "    Processed thread in JSON (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
+    (log :info (str "    Processed thread in JSON (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
     processed-posts))
 
 (defn get-posts-in-json
@@ -805,7 +805,7 @@ The most recent version will (hopefully) be stored in the database."
                                    "User-Agent"
                                    (ring.util.response/get-header noir.request/*request* "user-agent")))
                      options)
-        ; _ (timbre/debug (str options))
+        ; _ (log :debug (str options))
         response-first-try (clj-http.client/get source-url options)
         retry? (or (not (= (:status response-first-try) 200))
                    (< 1 (count (:trace-redirects response-first-try)))
@@ -817,9 +817,9 @@ The most recent version will (hopefully) be stored in the database."
         ; response-body-clj (json/read-str (:body response))
         ; response-body-clj (cheshire.core/parse-string (:body response))
         response-body-clj (clj-json.core/parse-string (:body response))
-        ; _ (timbre/debug (str response-body-clj))
+        ; _ (log :debug (str response-body-clj))
         ]
-    (timbre/info (str "    Downloaded thread in JSON (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
+    (log :info (str "    Downloaded thread in JSON (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
     (if (or (not (= (:status response) 200))
        (< 1 (count (:trace-redirects response)))
             (zero? (count (:body response))))
@@ -842,9 +842,9 @@ The most recent version will (hopefully) be stored in the database."
 (defn get-posts-from-database
   "Returns posts in the database. Returns nil if the thread is not saved in the database."
   [context]
-  ; (timbre/debug "get-posts-from-database")
+  ; (log :debug "get-posts-from-database")
   (try
-    (let [{:keys [service server board thread]} context
+    (let [{:keys [service board thread]} context
           dat-file       (db/get-dat-file service board thread)
           thread-in-html (db/get-thread-in-html service board thread)
           thread-in-json (db/get-thread-in-json service board thread)]

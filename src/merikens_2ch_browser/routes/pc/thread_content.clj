@@ -37,13 +37,12 @@
             [noir.validation :refer [rule errors? has-value? on-error]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-css include-js]]
-            [hiccup.form :refer :all]
-            [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre :refer [log]]
+            [taoensso.timbre :refer [log]]
             [clj-time.core]
             [clj-time.coerce]
             [clj-time.format]
+            [merikens-2ch-browser.cursive :refer :all]
             [merikens-2ch-browser.util :refer :all]
             [merikens-2ch-browser.param :refer :all]
             [merikens-2ch-browser.url :refer :all]
@@ -72,12 +71,12 @@
 
 (defn create-img-tag-for-thumbnail
   [url context]
-  ; (timbre/debug "create-img-tag-for-thumbnail:" url)
+  ; (log :debug "create-img-tag-for-thumbnail:" url)
   (let [real-url                     (to-real-url url)
         thumbnail-element-id         (random-element-id)
         thumbnail-wrapper-element-id (random-element-id)
         failed-download              (db/get-failed-download (:id (session/get :user)) real-url)
-        ; _ (timbre/info "    failed-download:" failed-download)
+        ; _ (log :info "    failed-download:" failed-download)
         image      (cond
                      ; failed-download
                      ; nil
@@ -85,7 +84,7 @@
                      (db/get-image-with-url-without-content real-url)
                      :else
                      (db/get-image-with-url-without-content-and-thumbnail real-url))
-        ; _ (timbre/info "    image:" image)
+        ; _ (log :info "    image:" image)
         ng?        (or (ng-image? image) (ng-image-url? (:id (session/get :user)) real-url))
         thumbnail  (cond
                      ng?             image-thumbnail-ng-src
@@ -153,7 +152,7 @@
                             "    openURLInNewWindowWithReferrerDisabled('" src "');"
                             "}"))]
 
-    ; (timbre/info "    (:download-images context):" (:download-images context))
+    ; (log :info "    (:download-images context):" (:download-images context))
     (if (and (not image) (not failed-download) (:download-images context))
       (set-up-download real-url (:thread-url context)))
     (html
@@ -203,7 +202,9 @@
                                                                 :else real-url) "');"]))))
 
 (defn process-external-link
-  [url context]
+  [url
+   _ ; context
+   ]
   (let [real-url (to-real-url url)
         element-id (random-element-id)]
     (str "<a id='" element-id "' class='" element-id "'>"
@@ -225,7 +226,7 @@
 
 (defn process-succesive-image-links-in-plain-text
   [s context]
-  ; (timbre/debug "process-succesive-image-links-in-plain-text:" s)
+  ; (log :debug "process-succesive-image-links-in-plain-text:" s)
   (let [s (clojure.string/replace s #"[ \t\n]+" "\n")]
     (if create-thumbnails
       (-> s
@@ -240,7 +241,7 @@
 
 (defn process-url-in-plain-text
   [url context]
-  ; (timbre/debug "process-url-in-text:" url)
+  ; (log :debug "process-url-in-text:" url)
   (cond
     ; internal links
     (split-thread-url (to-real-url url))
@@ -265,7 +266,7 @@
 
 (defn process-anchor-in-plain-text
   [anchor context]
-  ; (timbre/debug "process-anchor:" anchor context)
+  ; (log :debug "process-anchor:" anchor context)
   (try
     (cond
       (re-find #"^(>>?|＞＞?|≫)((([0-9]+)(-[0-9]+)?,)*([0-9]+)(-[0-9]+)?)$" anchor)
@@ -282,12 +283,12 @@
       :else
       anchor)
     (catch Throwable t
-      (timbre/debug "process-anchor: Exception caught:" (str t))
+      (log :debug "process-anchor: Exception caught:" (str t))
       anchor)))
 
 (defn process-id-in-plain-text
   [id context]
-  ; (timbre/debug "process-anchor:" anchor context)
+  ; (log :debug "process-anchor:" anchor context)
   (try
     (let [converted-id (-> id
                          (clojure.string/replace #"^ID:" "id-")
@@ -302,11 +303,13 @@
             "</div>"
             "</div>"))
     (catch Throwable t
-      (timbre/debug "process-id-in-plain-text: Exception caught:" (str t))
+      (log :debug "process-id-in-plain-text: Exception caught:" (str t))
       id)))
 
 (defn add-highlights-to-plain-text
-  [s context]
+  [s
+   _ ; context
+   ]
   (str "<span class='highlighted'>"
        (escape-html s)
        "</span>"))
@@ -337,7 +340,7 @@
   [s context depth]
   (if (>= depth (count regex-match-processors))
     ; (do
-    ;   ; (timbre/debug (str "\"" s "\""))
+    ;   ; (log :debug (str "\"" s "\""))
     ;   (try
     ;     (.text (Jsoup/parse s))
     ;     (catch Throwable t
@@ -349,16 +352,16 @@
           processor (:processor (nth regex-match-processors depth))
           matcher   (if (nil? pattern) nil (re-matcher pattern s))]
       (if (or (nil? pattern)
-              (not (.find matcher)))
+              (not (java-matcher-find matcher)))
         (process-regex-matches-in-plain-text s context (inc depth))
         (str
-          (process-regex-matches-in-plain-text (subs s 0 (.start matcher)) context (inc depth))
-          (processor (subs s (.start matcher) (.end matcher)) context)
-          (process-regex-matches-in-plain-text (subs s (.end matcher) (count s)) context depth))))))
+          (process-regex-matches-in-plain-text (subs s 0 (java-matcher-start matcher)) context (inc depth))
+          (processor (subs s (java-matcher-start matcher) (java-matcher-end matcher)) context)
+          (process-regex-matches-in-plain-text (subs s (java-matcher-end matcher) (count s)) context depth))))))
 
 (defn convert-message-in-post-into-html
   [text context]
-  ; (timbre/debug text)
+  ; (log :debug text)
   (-> text
     (process-regex-matches-in-plain-text context 0)
     (clojure.string/replace "\n" "<br>")
@@ -368,7 +371,7 @@
   [index handle-or-cap tripcode cap email etc message special-color context]
   (let [{:keys [service server board thread thread-url]} context
         bookmark      (:bookmark context)
-        res-count     (:res-count context)
+        ; res-count     (:res-count context)
         new-post?     (not (and bookmark
                                 (not (= bookmark 0))
                                 (<= index bookmark)))
@@ -390,13 +393,13 @@
                                                            (or (= 0 (count (:thread-title %1)))
                                                                (try
                                                                  (re-find (re-pattern (:thread-title %1)) (:thread-title context))
-                                                                 (catch Throwable t false)))
+                                                                 (catch Throwable _ false)))
                                                            (or (and (= (:filter-type %1) "post") (= (:pattern %1) post-signature))
                                                                (and (= (:filter-type %1) "id") (= (:pattern %1) id))
                                                                (and (= (:filter-type %1) "message")
                                                                     (try
                                                                       (re-find (re-pattern (:pattern %1)) message)
-                                                                      (catch Throwable t false)))))
+                                                                      (catch Throwable _ false)))))
                                                      (:post-filters context)))))]
     ; (if (or (and (not (sc-url? (:thread-url context))) (re-find #"Over [0-9]+ Thread" etc))
     ;         (and      (sc-url? (:thread-url context))  (re-find #"Over [0-9]+ Comments" etc)))
@@ -437,7 +440,7 @@
          "："
          (escape-html email)
          "："
-         ; (timbre/debug etc)
+         ; (log :debug etc)
          ; BE
          ; ex: http://hayabusa3.2ch.net/test/read.cgi/news/1418828981/1 BE:829826275-PLT(12000)
          ; ex: http://anago.2ch.sc/test/read.cgi/software/1408011845/680 BE:48417874-2BP(0)
@@ -494,20 +497,20 @@
   []
   [:script "function jumpToPost() {}"])
 
-(defn update-bookmark-without-jumping
+(comment defn update-bookmark-without-jumping
   [context]
-  (let [{:keys [service server board thread bookmark]} context
-        {:keys [res-count archived]} (db/get-thread-info service board thread)]
+  (let [{:keys [service board thread]} context
+        {:keys [res-count]} (db/get-thread-info service board thread)]
     (db/update-bookmark service board thread res-count)
     [:script "function jumpToPost() {}"]))
 
 (defn jump-to-first-new-post
   [context]
-  ; (timbre/debug "jump-to-first-new-post:" context)
-  (let [{:keys [service server board thread bookmark]} context
+  ; (log :debug "jump-to-first-new-post:" context)
+  (let [{:keys [service board thread bookmark]} context
         {:keys [res-count archived]} (db/get-thread-info service board thread)]
     ; (db/update-bookmark service board thread res-count)
-    ; (timbre/debug bookmark res-count)
+    ; (log :debug bookmark res-count)
     (cond
       ; There are new posts.
       (and bookmark (> bookmark 0) (> res-count bookmark))
@@ -546,8 +549,8 @@
 
 (defn get-posts-in-thread
   [context]
-  ; (timbre/debug "get-posts-in-thread")
-  (let [{:keys [service server board thread]} context
+  ; (log :debug "get-posts-in-thread")
+  (let [{:keys [service board thread]} context
         thread-info         (db/get-thread-info service board thread)
         posts-from-database (if (:archived thread-info)
                               (get-posts-from-database (assoc context :archived true)))
@@ -573,7 +576,7 @@
             (jump-to-first-new-post context)
             (do-not-jump)))
         (catch Throwable t
-          (timbre/info "    Failed to download current DAT file:" (str t))
+          (log :info "    Failed to download current DAT file:" (str t))
           ; (print-stack-trace t)
 
           (try
@@ -584,7 +587,7 @@
                 (jump-to-first-new-post context)
                 (do-not-jump)))
             (catch Throwable t
-              (timbre/info "    Failed to download thread in HTML:" (str t))
+              (log :info "    Failed to download thread in HTML:" (str t))
               ; (print-stack-trace t)
 
               (try
@@ -595,7 +598,7 @@
                     (jump-to-first-new-post context)
                     (do-not-jump)))
                 (catch Throwable t
-                  (timbre/info "    Failed to download thread in JSON:" (str t))
+                  (log :info "    Failed to download thread in JSON:" (str t))
                   ; (print-stack-trace t)
 
                   (try
@@ -607,7 +610,7 @@
                         (jump-to-first-new-post context)
                         (do-not-jump)))
                     (catch Throwable t
-                      (timbre/info "    Failed to download archived DAT file:" (str t))
+                      (log :info "    Failed to download archived DAT file:" (str t))
                       ; (print-stack-trace t)
 
                       (try
@@ -624,14 +627,17 @@
                               (jump-to-end-of-thread)
                               (do-not-jump))))
                         (catch Throwable t
-                          ; (timbre/debug "get-thread-content: get-posts-through-read-cgi failed:" (str t))
+                          ; (log :debug "get-thread-content: get-posts-through-read-cgi failed:" (str t))
                           ; (print-stack-trace t)
                           (throw t))))))))))))))
 
 (defn api-get-thread-content
-  [original-thread-url search-text search-type append-after]
-  ; (timbre/debug "api-get-thread-content")
-  (timbre/info "Preparing thread content...")
+  [original-thread-url
+   search-text
+   _ ; search-type
+   append-after]
+  ; (log :debug "api-get-thread-content")
+  (log :info "Preparing thread content...")
   (let [start-time          (System/nanoTime)
         parts (split-thread-url original-thread-url)
         {:keys [service server original-server current-server board thread-no options]} parts
@@ -652,13 +658,13 @@
         (increment-http-request-count)
         ;  Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
         (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
-        ; (timbre/debug "api-get-thread-content: options:" options)
+        ; (log :debug "api-get-thread-content: options:" options)
         (let [start-time-for-subject-txt (System/nanoTime)
               active?             (is-thread-active? server board thread-no)
               _                   (if active?
                                     (db/mark-thread-as-active service server board thread-no)
                                     (db/mark-thread-as-archived service server board thread-no))
-              _                   (timbre/info (str "    Checked subject.txt (" (format "%.0f" (* (- (System/nanoTime) start-time-for-subject-txt) 0.000001)) "ms)."))
+              _                   (log :info (str "    Checked subject.txt (" (format "%.0f" (* (- (System/nanoTime) start-time-for-subject-txt) 0.000001)) "ms)."))
 
               start-time-for-post-filters (System/nanoTime)
               post-signature-head (str service "," board "," thread-no ",")
@@ -668,8 +674,8 @@
                                                              %1
                                                              nil)
                                                           (db/get-all-post-filters)))
-              ; _                   (timbre/debug post-filters)
-              _                   (timbre/info (str "    Prepared post filters (" (format "%.0f" (* (- (System/nanoTime) start-time-for-post-filters) 0.000001)) "ms)."))
+              ; _                   (log :debug post-filters)
+              _                   (log :info (str "    Prepared post filters (" (format "%.0f" (* (- (System/nanoTime) start-time-for-post-filters) 0.000001)) "ms)."))
 
               bookmark            (db/get-bookmark service board thread-no)
               context             {:thread-url           thread-url
@@ -691,7 +697,7 @@
                                    :append-after         append-after
                                    :convert-raw-post-to-html convert-raw-post-to-html
                                    :active?              active?}
-              ; _               (timbre/debug "api-get-thread-content: Calling get-posts-in-thread.")
+              ; _               (log :debug "api-get-thread-content: Calling get-posts-in-thread.")
               thread-heading-id (random-element-id)
               posts-in-thread   (get-posts-in-thread context)
               posts-in-thread     (if append-after
@@ -700,7 +706,7 @@
                                      [:div.thread-heading {:id thread-heading-id}
                                       (escape-html (remove-ng-words-from-thread-title (:title (db/get-thread-info service board thread-no))))]
                                      posts-in-thread])
-              ; _               (timbre/debug "api-get-thread-content: Call to get-posts-in-thread is done.")
+              ; _               (log :debug "api-get-thread-content: Call to get-posts-in-thread is done.")
               {:keys [title res-count]} (db/get-thread-info service board thread-no)
               new-res-count-id    (clojure.string/replace (str "new-post-count-" service "-" board "-" thread-no) #"[./]" "_")
               thread-title-class  (clojure.string/replace (str "thread-title-" service "-" board "-" thread-no) #"[./]" "_")
@@ -719,9 +725,9 @@
                                        "imageList = [];"
                                        "resetThumbnailLists();"
                                        "reverseAnchors = [];"])
-                                    ; (do (timbre/debug "api-get-thread-content: before posts-in-thread.") nil)
+                                    ; (do (log :debug "api-get-thread-content: before posts-in-thread.") nil)
                                     posts-in-thread
-                                    ; (do (timbre/debug "api-get-thread-content: after posts-in-thread.") nil)
+                                    ; (do (log :debug "api-get-thread-content: after posts-in-thread.") nil)
                                     [:script#thread-content-run-once
                                      ; "$(document).ready(function() {"
                                      "loadThumbnails();"
@@ -742,17 +748,17 @@
                                      ; "});"
                                      ])]
 
-          (timbre/info (str "    Created response (" (format "%.0f" (* (- (System/nanoTime) start-time-for-response) 0.000001)) "ms, " (count result) " characters)."))
+          (log :info (str "    Created response (" (format "%.0f" (* (- (System/nanoTime) start-time-for-response) 0.000001)) "ms, " (count result) " characters)."))
           (db/update-board-server-if-there-is-no-info service server board)
           (if (or (nil? bookmark) (zero? bookmark))
             (db/update-bookmark service board thread-no 1))
 
           (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
           (decrement-http-request-count)
-          (timbre/info (str "    Total time: " (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms"))
+          (log :info (str "    Total time: " (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms"))
           result)
         (catch Throwable t
-          (timbre/debug "api-get-thread-content: Exception caught:" (str t))
+          (log :debug "api-get-thread-content: Exception caught:" (str t))
           (print-stack-trace t)
           (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
           (decrement-http-request-count)
@@ -800,7 +806,6 @@
                          :res-count            (:res-count thread-info)
                          :active?              active?}
         posts-in-thread (get-posts-in-thread context)
-        {:keys [title res-count]} (db/get-thread-info service board thread-no)
         thread-heading-id (random-element-id)]
 
     (list
@@ -819,7 +824,7 @@
 (defn get-threads-with-new-posts
   [board-url]
   (try
-    (let [{:keys [server service board]} (split-board-url board-url)
+    (let [{:keys [service board]} (split-board-url board-url)
           body      (get-subject-txt board-url true)
           all-items (clojure.string/split body #"\n")
           items     (if (shitaraba-url? board-url) (drop-last all-items) all-items)]
@@ -839,8 +844,7 @@
                                 (> bookmark 0)
                                 (> res-count bookmark)
                                 thread-no))))))))
-    (catch Throwable e
-      nil)))
+    (catch Throwable _ nil)))
 
 (defn api-get-new-posts-in-board
   [board-url]
@@ -856,7 +860,7 @@
 
       :else
       (try
-        (timbre/info "Preparing new posts in board...")
+        (log :info "Preparing new posts in board...")
         (increment-http-request-count)
         (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
         (let [start-time (System/nanoTime)
@@ -889,11 +893,11 @@
           (db/update-board-server-if-there-is-no-info service server board)
           (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
           (decrement-http-request-count)
-          (timbre/info (str "    Total time: " (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms"))
+          (log :info (str "    Total time: " (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms"))
           result)
 
         (catch Throwable t
-          (timbre/debug "api-get-new-posts-in-board: Exception caught:" (str t))
+          (log :debug "api-get-new-posts-in-board: Exception caught:" (str t))
           (print-stack-trace t)
           (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
           (decrement-http-request-count)
@@ -908,7 +912,7 @@
 
       :else
       (try
-        (timbre/info "Preparing new posts...")
+        (log :info "Preparing new posts...")
         (increment-http-request-count)
         (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
         (let [start-time (System/nanoTime)
@@ -937,7 +941,7 @@
                                                                       (:thread-no %1)
                                                                       board-info)
                                              (catch Throwable t
-                                               (timbre/error "get-new-posts: Exception caught:" (str t))
+                                               (log :error "get-new-posts: Exception caught:" (str t))
                                                (print-stack-trace t)
                                                nil))))
                                       (thread-list-fn))]
@@ -950,11 +954,11 @@
 
           (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
           (decrement-http-request-count)
-          (timbre/info (str "    Total time: " (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms"))
+          (log :info (str "    Total time: " (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms"))
           result)
 
         (catch Throwable t
-          (timbre/error "get-new-posts: Exception caught:" (str t))
+          (log :error "get-new-posts: Exception caught:" (str t))
           (print-stack-trace t)
           (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
           (decrement-http-request-count)
@@ -974,18 +978,18 @@
 
 (defn api-delete-thread-log
   [thread-url]
-  ; (timbre/debug "api-delete-thread-log")
+  ; (log :debug "api-delete-thread-log")
   (if (not (check-login))
     (ring.util.response/not-found "404 Not Found")
-    (let [{:keys [server board thread posts]} (split-thread-url thread-url)
+    (let [{:keys [server board thread]} (split-thread-url thread-url)
           service (server-to-service server)]
-      (try (db/delete-dat-file service board thread)        (catch Throwable t (timbre/debug "db/delete-dat-file failed")))
-      (try (db/delete-thread-in-html service board thread)  (catch Throwable t (timbre/debug "db/delete-thread-in-html")))
-      (try (db/delete-thread-info service board thread)     (catch Throwable t (timbre/debug "db/delete-thread-info failed")))
-      (try (db/delete-bookmark service board thread)        (catch Throwable t (timbre/debug "db/delete-bookmark failed")))
-      (try (db/update-bookmark service board thread 0)      (catch Throwable t (timbre/debug "db/update-bookmark failed")))
-      (try (db/delete-favorite-thread service board thread) (catch Throwable t (timbre/debug "db/delete-favorite-thread failed")))
-      (timbre/info "Thread log was deleted:" thread-url)
+      (try (db/delete-dat-file service board thread)        (catch Throwable _ (log :debug "db/delete-dat-file failed")))
+      (try (db/delete-thread-in-html service board thread)  (catch Throwable _ (log :debug "db/delete-thread-in-html")))
+      (try (db/delete-thread-info service board thread)     (catch Throwable _ (log :debug "db/delete-thread-info failed")))
+      (try (db/delete-bookmark service board thread)        (catch Throwable _ (log :debug "db/delete-bookmark failed")))
+      (try (db/update-bookmark service board thread 0)      (catch Throwable _ (log :debug "db/update-bookmark failed")))
+      (try (db/delete-favorite-thread service board thread) (catch Throwable _ (log :debug "db/delete-favorite-thread failed")))
+      (log :info "Thread log was deleted:" thread-url)
       "OK")))
 
 (defn api-convert-thread-url-to-board-url
@@ -995,26 +999,27 @@
 
 (defn api-add-aborn-filter-with-post-signature
   [post-signature]
-  ; (timbre/debug "api-add-aborn-filter-with-post-signature:" post-signature)
+  ; (log :debug "api-add-aborn-filter-with-post-signature:" post-signature)
   (if (or
         (not (check-login))
         (nil? (re-find #"^[a-z0-9._]+,[a-z0-9]+,[0-9]+,[0-9]+," post-signature)))
     (ring.util.response/not-found "404 Not Found")
     (let [parts (clojure.string/split post-signature #",")
-          service    (nth parts 0)
+          ; service    (nth parts 0)
           board      (nth parts 1)
-          thread-no  (nth parts 2)
-          post-index (nth parts 3)]
+          ; thread-no  (nth parts 2)
+          ; post-index (nth parts 3)
+          ]
       (db/add-post-filter {:user-id     (:id (session/get :user))
                            :filter-type "post"
                            :pattern     post-signature
                            :board       board})
-      (timbre/debug "OK")
+      (log :debug "OK")
       "OK")))
 
 (defn api-add-aborn-filter-with-id
   [id]
-  ; (timbre/debug "api-add-aborn-filter-with-id:" id)
+  ; (log :debug "api-add-aborn-filter-with-id:" id)
   (if (or
         (not (check-login))
         (nil? (post-id? id)))
@@ -1023,19 +1028,19 @@
       (db/add-post-filter {:user-id     (:id (session/get :user))
                            :filter-type "id"
                            :pattern     id})
-      (timbre/debug "api-add-aborn-filter-with-id: OK")
+      (log :debug "api-add-aborn-filter-with-id: OK")
       "OK")))
 
 (defn api-update-bookmark
   [service board thread-no post-index]
-  ; (timbre/debug "api-update-bookmark:" service board thread-no post-index)
+  ; (log :debug "api-update-bookmark:" service board thread-no post-index)
   (and (check-login)
        (let [thread-no  (java.lang.Long/parseLong thread-no)
              post-index (java.lang.Integer/parseInt post-index)
              thread-info (db/get-thread-info service board thread-no)
              bookmark   (db/get-bookmark service board thread-no)
              updated?   (or (nil? bookmark) (> post-index bookmark))]
-         ; (timbre/debug "api-update-bookmark:" bookmark post-index)
+         ; (log :debug "api-update-bookmark:" bookmark post-index)
          (when thread-info
            (if updated?
              (db/update-bookmark service board thread-no post-index))

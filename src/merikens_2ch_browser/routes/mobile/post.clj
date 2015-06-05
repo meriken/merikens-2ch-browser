@@ -55,7 +55,7 @@
 
 (defn post-page
   [thread-url thread-title handle email message board-url board-name]
-  ; (timbre/debug "post-page:" message)
+  ; (log :debug "post-page:" message)
   (let [new-thread? (> (count board-url) 0)
         parts (if new-thread? (split-board-url board-url) (split-thread-url thread-url))
         {:keys [service board thread]} parts
@@ -100,8 +100,8 @@
   [thread-title thread-url handle email message secret-name secret-value board-url board-name]
   (let [new-thread? (> (count board-url) 0)
         parts (if new-thread? (split-board-url board-url) (split-thread-url thread-url))]
-    ; (timbre/debug parts)
-    ; (timbre/debug "'" handle "', '" email "', '" message "'")
+    ; (log :debug parts)
+    ; (log :debug "'" handle "', '" email "', '" message "'")
     (if (not parts)
       nil
       (let [{:keys [service server board thread]} parts

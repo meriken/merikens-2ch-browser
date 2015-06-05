@@ -37,13 +37,12 @@
             [noir.validation :refer [rule errors? has-value? on-error]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-css include-js]]
-            [hiccup.form :refer :all]
-            [hiccup.element :refer :all]
             [hiccup.util :refer [escape-html]]
-            [taoensso.timbre :as timbre :refer [log]]
+            [taoensso.timbre :refer [log]]
             [clj-time.core]
             [clj-time.coerce]
             [clj-time.format]
+            [merikens-2ch-browser.cursive :refer :all]
             [merikens-2ch-browser.util :refer :all]
             [merikens-2ch-browser.param :refer :all]
             [merikens-2ch-browser.url :refer :all]
@@ -60,8 +59,8 @@
 
 (defn get-log-list
   [^String board-url]
-  (let [{:keys [server service board]} (split-board-url board-url)
-        board-info (db/get-board-info service board)
+  (let [{:keys [service board]} (split-board-url board-url)
+        ; board-info (db/get-board-info service board)
         log-list (concat (db/get-dat-file-list-for-board service board) (db/get-html-file-list-for-board service board))]
     (clojure.string/join
       (map #(let [thread-info (db/get-thread-info service board (:thread-no %1))]
@@ -72,16 +71,15 @@
   ^String
 [^String s
  ^java.util.regex.Pattern re]
-  (let [re-str (str re)
-        matcher (re-matcher re s)]
-    (if (not (.find matcher))
+  (let [matcher (re-matcher re s)]
+    (if (not (java-matcher-find matcher))
       (escape-html s)
       (str
-        (escape-html (subs s 0 (.start matcher)))
+        (escape-html (subs s 0 (java-matcher-start matcher)))
         (str "<span style='background-color: yellow;'>"
-             (escape-html (subs s (.start matcher) (.end matcher)))
+             (escape-html (subs s (java-matcher-start matcher) (java-matcher-end matcher)))
              "</span>")
-        (add-highlights-to-thread-title-and-escape-html (subs s (.end matcher) (count s))
+        (add-highlights-to-thread-title-and-escape-html (subs s (java-matcher-end matcher) (count s))
                                                         re)))))
 
 (defn thread-list-item-to-html
@@ -175,10 +173,10 @@
 
 (defn update-database-for-thread-list
   [item-info-list]
-  ; (timbre/info "update-database-for-thread-list")
+  ; (log :info "update-database-for-thread-list")
   (Thread/sleep 1000)
   (doall (map #(let [{:keys [service server board thread-no res-count new-thread?]} %1]
-                 ; (timbre/info "update-database-for-thread-list:" service server board thread-no res-count new-thread?)
+                 ; (log :info "update-database-for-thread-list:" service server board thread-no res-count new-thread?)
                  (if new-thread?
                    (db/update-bookmark service board thread-no 0))
                  (db/update-thread-res-count service server board thread-no res-count)
@@ -189,14 +187,14 @@
 (defn api-get-thread-list
   [^String board-url
    search-text
-   search-type
+   _ ; search-type
    ie
    log-list]
-  ; (timbre/debug "api-get-thread-list:" board-url search-text search-type)
+  ; (log :debug "api-get-thread-list:" board-url search-text search-type)
   (if (not (check-login))
     (html [:script "open('/login', '_self');"])
     (try
-      (timbre/info "Preparing thread list...")
+      (log :info "Preparing thread list...")
       (increment-http-request-count)
       (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
       (let [start-time (System/nanoTime)
@@ -291,10 +289,10 @@
         (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
         (decrement-http-request-count)
         (do (future (let [end-time (System/nanoTime)]
-                      (timbre/info (str "    Retrieved subject.txt (" (format "%.0f" subject-txt-time-spent) "ms)."))
-                      (timbre/info (str "    Converted subject.txt into HTML (" (format "%.0f" thread-list-item-to-html-time-spent) "ms)."))
-                      (timbre/info (str "    Created response (" (format "%.0f" created-response-time-spent) "ms)."))
-                      (timbre/info (str "    Total time: " (format "%.0f" (* (- end-time start-time) 0.000001)) "ms")))))
+                      (log :info (str "    Retrieved subject.txt (" (format "%.0f" subject-txt-time-spent) "ms)."))
+                      (log :info (str "    Converted subject.txt into HTML (" (format "%.0f" thread-list-item-to-html-time-spent) "ms)."))
+                      (log :info (str "    Created response (" (format "%.0f" created-response-time-spent) "ms)."))
+                      (log :info (str "    Total time: " (format "%.0f" (* (- end-time start-time) 0.000001)) "ms")))))
         response)
 
       (catch Throwable t
@@ -385,7 +383,7 @@
 
 (defn api-get-similar-thread-list
   [thread-url ie]
-  ; (timbre/debug "api-get-thread-list:" board-url search-text search-type)
+  ; (log :debug "api-get-thread-list:" board-url search-text search-type)
   (if (not (check-login))
     (html [:script "open('/login', '_self');"])
     (try
@@ -475,7 +473,7 @@
 
 (defn convert-special-thread-list-item-to-html
   [item index context board-info-map enable-table-sorter]
-  ; (timbre/debug item)
+  ; (log :debug item)
   (try
     (let [{:keys [service server board thread-no]} item
           thread-info (db/get-thread-info service board thread-no)
@@ -543,10 +541,10 @@
       (if enable-table-sorter (html item-in-html) item-in-html))
 
     (catch Throwable t
-      (timbre/debug "convert-special-thread-list-item-to-html: Exception caught:" (str t))
-      (timbre/debug "item:" item)
-      (timbre/debug "index:" index)
-      (timbre/debug "context:" context)
+      (log :debug "convert-special-thread-list-item-to-html: Exception caught:" (str t))
+      (log :debug "item:" item)
+      (log :debug "index:" index)
+      (log :debug "context:" context)
       (print-stack-trace t)
       nil)))
 
@@ -574,12 +572,12 @@
                 (db/update-thread-res-count service server board thread-no res-count)
                 (create-thread-url server board thread-no))
               nil)))))
-    (catch Throwable e
+    (catch Throwable _
       nil)))
 
 (defn update-res-count-for-multiple-threads
   [items archive-threads]
-  ; (timbre/debug "update-res-count-for-multiple-threads:" (count items))
+  ; (log :debug "update-res-count-for-multiple-threads:" (count items))
   (try
     (let [threads (remove nil? (map #(try
                                        (let [{:keys [service board thread-no]} %1
@@ -588,38 +586,38 @@
                                              thread-url (create-thread-url server board thread-no)]
                                          {:thread-url thread-url
                                           :board-url (create-board-url server board)})
-                                       (catch Throwable t
+                                       (catch Throwable _
                                          ; (print-stack-trace t)
                                          nil))
                                     items))
-          ; _      (timbre/debug "threads:" (count threads))
+          ; _      (log :debug "threads:" (count threads))
           boards (distinct (map #(:board-url %1) threads))
-          ; _      (timbre/debug "boards:" boards)
+          ; _      (log :debug "boards:" boards)
           updated-threads (apply concat (doall (cp/pmap :builtin update-res-count-for-board boards)))
-          ; _      (timbre/debug "(map :thread-url threads):" (map :thread-url threads))
-          ; _      (timbre/debug "updated-threads:" updated-threads)
+          ; _      (log :debug "(map :thread-url threads):" (map :thread-url threads))
+          ; _      (log :debug "updated-threads:" updated-threads)
           untouched-threads (into () (clojure.set/difference (set (map :thread-url threads)) (set updated-threads)))
-          ; _      (timbre/debug "untouched-threads:" untouched-threads)
+          ; _      (log :debug "untouched-threads:" untouched-threads)
           untouched-active-threads (remove #(do
                                               (try
-                                                (let [{:keys [service server board thread-no]} (split-thread-url %1)]
-                                                  ; (timbre/debug (:archived (db/get-thread-info service board thread-no)))
+                                                (let [{:keys [service board thread-no]} (split-thread-url %1)]
+                                                  ; (log :debug (:archived (db/get-thread-info service board thread-no)))
                                                   (:archived (db/get-thread-info service board thread-no)))
-                                                (catch Throwable t true)))
+                                                (catch Throwable _ true)))
                                            untouched-threads)
-          ; _      (timbre/debug "untouched-active-threads:" untouched-active-threads)
+          ; _      (log :debug "untouched-active-threads:" untouched-active-threads)
           threads-to-be-archived  (remove #(do
                                              (try
-                                               (let [{:keys [service server board thread-no]} (split-thread-url %1)]
+                                               (let [{:keys [server board thread-no]} (split-thread-url %1)]
                                                  (is-thread-active? server board thread-no))
-                                               (catch Throwable t true)))
+                                               (catch Throwable _ true)))
                                           untouched-active-threads)
-          ;_      (timbre/debug "threads-to-be-archived:" threads-to-be-archived)
+          ;_      (log :debug "threads-to-be-archived:" threads-to-be-archived)
           ]
 
       (when (and archive-threads (> (count threads-to-be-archived) 0))
-        (timbre/debug "Archiving threads:" (count threads-to-be-archived))
-        (do (future (doall (map #(let [_ (timbre/debug "Downloading thread to archive:" %1)
+        (log :debug "Archiving threads:" (count threads-to-be-archived))
+        (do (future (doall (map #(let [_ (log :debug "Downloading thread to archive:" %1)
                                        {:keys [service server board thread-no]} (split-thread-url %1)
                                        board (if (shingetsu-server? server)
                                                (clojure.string/replace board #"_[0-9A-F]+$" "")
@@ -638,30 +636,29 @@
                                    (try
                                      (check-dat-file-availability (:thread-url context))
                                      (get-posts-in-current-dat-file context)
-                                     (catch Throwable t
+                                     (catch Throwable _
                                        (try
                                          (check-dat-file-availability (:thread-url context))
                                          (get-posts-in-archived-dat-file context)
-                                         (catch Throwable t
+                                         (catch Throwable _
                                            (try
                                              (get-posts-through-read-cgi context)
-                                             (catch Throwable t
-                                               ))))))
+                                             (catch Throwable _))))))
                                    (db/mark-thread-as-archived service server board thread-no))
                                 (take number-of-threads-to-archive threads-to-be-archived)))))))
 
     (catch Throwable t
       (print-stack-trace t)
-      (timbre/debug "update-res-count-for-multiple-threads: Exception caught:" (str t))
+      (log :debug "update-res-count-for-multiple-threads: Exception caught:" (str t))
       nil)))
 
 (defn get-special-thread-list
   [refresh items context ie]
-  ; (timbre/debug "get-special-thread-list:" refresh items)
+  ; (log :debug "get-special-thread-list:" refresh items)
   (try
     (increment-http-request-count)
     (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
-    (timbre/info "Preparing thread list...")
+    (log :info "Preparing thread list...")
     (let [start-time (System/nanoTime)
           _ (if (= refresh "1") (update-res-count-for-multiple-threads items true))
           board-info-map (create-board-info-map items)
@@ -706,7 +703,7 @@
                        [:script "$('#thread-list-table').tablesorter({sortList: [[0,1]]});"])))]
       (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
       (decrement-http-request-count)
-      (timbre/info (str "    Total time: " (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms"))
+      (log :info (str "    Total time: " (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms"))
       result)
     (catch Throwable t
       (print-stack-trace t)
@@ -715,8 +712,11 @@
       (html [:div.message-error-right-pane "スレッド一覧の読み込みに失敗しました。" [:br] (bbn-check)]))))
 
 (defn api-get-favorite-thread-list
-  [refresh search-text search-type ie]
-  ; (timbre/debug "api-get-favorite-thread-list")
+  [refresh
+   search-text
+   _ ; search-type
+   ie]
+  ; (log :debug "api-get-favorite-thread-list")
   (if (not (check-login))
     (html [:script "open('/login', '_self');"])
     (get-special-thread-list refresh
@@ -727,7 +727,10 @@
                              ie)))
 
 (defn api-get-recently-viewed-thread-list
-  [refresh search-text search-type ie]
+  [refresh
+   search-text
+   _ ; search-type
+   ie]
   (if (not (check-login))
     (html [:script "open('/login', '_self');"])
     (get-special-thread-list refresh
@@ -738,7 +741,10 @@
                              ie)))
 
 (defn api-get-recently-posted-thread-list
-  [refresh search-text search-type ie]
+  [refresh
+   search-text
+   _ ; search-type
+   ie]
   (if (not (check-login))
     (html [:script "open('/login', '_self');"])
     (get-special-thread-list refresh
@@ -749,7 +755,10 @@
                              ie)))
 
 (defn api-get-dat-file-list
-  [refresh search-text search-type ie]
+  [refresh
+   search-text
+   _ ; search-type
+   ie]
   (if (not (check-login))
     (html [:script "open('/login', '_self');"])
     (get-special-thread-list refresh
@@ -760,7 +769,10 @@
                              ie)))
 
 (defn api-get-html-file-list
-  [refresh search-text search-type ie]
+  [refresh
+   search-text
+   _ ; search-type
+   ie]
   (if (not (check-login))
     (html [:script "open('/login', '_self');"])
     (get-special-thread-list refresh
@@ -772,8 +784,8 @@
 
 (defn count-new-posts-in-thread
   [item]
-  ; (timbre/debug "count-new-posts-in-thread:" item)
-  (let  [{:keys [service board thread-no thread-url]} item
+  ; (log :debug "count-new-posts-in-thread:" item)
+  (let  [{:keys [service board thread-no]} item
          res-count (:res-count (db/get-thread-info service board thread-no))
          bookmark  (db/get-bookmark service board thread-no)]
     (if (and res-count
@@ -785,7 +797,7 @@
 
 (defn count-new-posts-in-thread-list
   [thread-list refresh]
-  ; (timbre/debug "count-new-posts-in-thread-list")
+  ; (log :debug "count-new-posts-in-thread-list")
   (if refresh
     (update-res-count-for-multiple-threads thread-list true))
   (apply +
@@ -819,7 +831,7 @@
 
 (defn api-get-special-menu-content
   [bubbles refresh]
-  ; (timbre/debug "api-get-special-menu-content:" bubbles refresh)
+  ; (log :debug "api-get-special-menu-content:" bubbles refresh)
   (if (not (check-login))
     (html [:script "open('/login', '_self');"])
     (try
@@ -895,13 +907,13 @@
 
 (defn api-add-favorite-thread
   [thread-url]
-  ; (timbre/debug "api-add-favorite-thread")
-  ; (timbre/debug thread-url thread-title)
+  ; (log :debug "api-add-favorite-thread")
+  ; (log :debug thread-url thread-title)
   (if (not (check-login))
     nil
     (let
-      [{:keys [service original-server board thread posts]} (split-thread-url thread-url)]
-      ; (timbre/debug (split-thread-url thread-url))
+      [{:keys [service original-server board thread]} (split-thread-url thread-url)]
+      ; (log :debug (split-thread-url thread-url))
       (db/add-favorite-thread {:user-id   (:id (session/get :user))
                                :service   service
                                :server    original-server
@@ -911,23 +923,23 @@
 
 (defn api-remove-favorite-thread
   [thread-url]
-  ; (timbre/debug "api-remove-favorite-thread")
-  ; (timbre/debug thread-url)
+  ; (log :debug "api-remove-favorite-thread")
+  ; (log :debug thread-url)
   (if (not (check-login))
     (ring.util.response/not-found "404 Not Found")
     (let
-      [{:keys [service server board thread]} (split-thread-url thread-url)]
+      [{:keys [service board thread]} (split-thread-url thread-url)]
       (if (db/get-favorite-thread service board (db/prepare-thread-no thread))
         (db/delete-favorite-thread service board (db/prepare-thread-no thread)))
       "OK")))
 
 (defn api-is-favorite-thread
   [thread-url]
-  ; (timbre/debug "api-is-favorite-thread")
+  ; (log :debug "api-is-favorite-thread")
   (if (not (check-login))
     (ring.util.response/not-found "404 Not Found")
     (let
-      [{:keys [server board thread posts]} (split-thread-url thread-url)
+      [{:keys [server board thread]} (split-thread-url thread-url)
        service (server-to-service server)]
       (if (db/get-favorite-thread service board thread)
         "true"
@@ -935,7 +947,7 @@
 
 (defn api-get-new-post-counts
   [thread-url-list]
-  ; (timbre/debug "api-get-new-post-counts:" (count thread-url-list))
+  ; (log :debug "api-get-new-post-counts:" (count thread-url-list))
   (when (check-login)
     (let [threads (map #(split-thread-url %1) (clojure.string/split thread-url-list #"\n"))]
       (update-res-count-for-multiple-threads threads false)
