@@ -178,7 +178,7 @@
   (if (not (check-login))
     (html [:script "open('/login', '_self');"])
     (try
-      (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
+      (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
       (increment-http-request-count)
       (let [result (html (cp/pmap
                            :builtin

@@ -142,7 +142,7 @@
     (html [:script "open('/login', '_self');"])
     (try
       (increment-http-request-count)
-      (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
+      (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
       (let [result (get-bbs-menu-content menu-url)]
         (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
         (decrement-http-request-count)

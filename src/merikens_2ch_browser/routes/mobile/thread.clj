@@ -624,7 +624,7 @@
         (log :info "Preparing thread content...")
         (increment-http-request-count)
         ;  Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
-        (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
+        (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
         ; (log :debug "api-get-thread-content: options:" options)
 
         (let [start-time (System/nanoTime)

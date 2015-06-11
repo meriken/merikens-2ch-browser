@@ -26,7 +26,8 @@
 
 
 (ns merikens-2ch-browser.param
-  (:require [garden.core :refer [css]]))
+  (:require [garden.core :refer [css]])
+  (:import (:import java.lang.Thread)))
 
 (def default-port 50000)
 
@@ -37,6 +38,8 @@
 (def number-of-threads-for-thread-list 16)
 (def number-of-threads-for-thread-content 16)
 (def number-of-threads-for-new-posts 8)
+
+(def web-sever-thread-priority Thread/MAX_PRIORITY)
 
 (def user-agent "Monazilla/1.00")
 

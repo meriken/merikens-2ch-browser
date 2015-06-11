@@ -657,7 +657,7 @@
       (try
         (increment-http-request-count)
         ;  Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
-        (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
+        (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
         ; (log :debug "api-get-thread-content: options:" options)
         (let [start-time-for-subject-txt (System/nanoTime)
               active?             (is-thread-active? server board thread-no)
@@ -862,7 +862,7 @@
       (try
         (log :info "Preparing new posts in board...")
         (increment-http-request-count)
-        (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
+        (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
         (let [start-time (System/nanoTime)
               {:keys [service server board]} (split-board-url board-url)
               board-info      (db/get-board-info service board)
@@ -914,7 +914,7 @@
       (try
         (log :info "Preparing new posts...")
         (increment-http-request-count)
-        (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
+        (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
         (let [start-time (System/nanoTime)
               result          (html
                                 [:script

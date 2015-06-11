@@ -130,7 +130,7 @@
   (if (not (check-login))
     (html [:script "open('./mobile-login', '_self');"])
     (try
-      (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
+      (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
       (increment-http-request-count)
       (let [; start-time   (System/nanoTime)
             {:keys [service board]} (split-board-url board-url)

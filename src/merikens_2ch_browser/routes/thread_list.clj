@@ -196,7 +196,7 @@
     (try
       (log :info "Preparing thread list...")
       (increment-http-request-count)
-      (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
+      (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
       (let [start-time (System/nanoTime)
             {:keys [server service board]} (split-board-url board-url)
             body (if (= log-list "1") (get-log-list board-url) (get-subject-txt board-url true))
@@ -388,7 +388,7 @@
     (html [:script "open('/login', '_self');"])
     (try
       (increment-http-request-count)
-      (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
+      (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
       (let [{:keys [server service board thread-no]} (split-thread-url thread-url)
             normalized-thread-url (create-thread-url server board thread-no)
             thread-title (remove-ng-words-from-thread-title (:title (db/get-thread-info service board thread-no)))
@@ -657,7 +657,7 @@
   ; (log :debug "get-special-thread-list:" refresh items)
   (try
     (increment-http-request-count)
-    (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
+    (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
     (log :info "Preparing thread list...")
     (let [start-time (System/nanoTime)
           _ (if (= refresh "1") (update-res-count-for-multiple-threads items true))

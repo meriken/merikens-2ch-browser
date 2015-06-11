@@ -527,7 +527,7 @@
     (try
       (log :info "Preparing image...")
       (increment-http-request-count)
-      (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
+      (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
       (let [start-time (System/nanoTime)
             image      (db/get-image-with-id (Integer/parseInt id))
             body       (and image (new java.io.ByteArrayInputStream (:content image)))]
@@ -560,7 +560,7 @@
   (when (check-login)
     (try
       (increment-http-request-count)
-      (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
+      (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
       (let [result (let [image (db/get-image-with-id-without-content (Integer/parseInt id))]
                      ; (println image extension (:extension image))
                      (if (nil? image)

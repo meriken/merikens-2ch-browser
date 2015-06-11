@@ -138,7 +138,7 @@
   (log :debug "mobile-get-special-thread-list:" (count items))
   (try
     (increment-http-request-count)
-    (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/MAX_PRIORITY)
+    (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
     (log :info "Preparing thread list...")
     (let [start-time (System/nanoTime)
           _              (update-res-count-for-multiple-threads items true)

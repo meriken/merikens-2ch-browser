@@ -25,7 +25,8 @@
 
 
 
-(ns merikens-2ch-browser.param)
+(ns merikens-2ch-browser.param
+  (:import java.lang.Thread))
 
 
 
@@ -65,6 +66,8 @@
 (def number-of-threads-for-thread-list 16)
 (def number-of-threads-for-thread-content 48)
 (def number-of-threads-for-new-posts 8)
+
+(def web-sever-thread-priority Thread/MAX_PRIORITY)
 
 (def user-agent "Monazilla/1.00")
 
