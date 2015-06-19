@@ -18,6 +18,7 @@ pom.xml
 /merikens-2ch-browser.log.*
 /merikens-2ch-browser-log4j.*
 /merikens-2ch-browser.h2.db
+/merikens-2ch-browser.lock.db
 /merikens-2ch-browser.hsqldb.*
 /merikens-2ch-browser-backup.h2.db
 /merikens-2ch-browser-backup.hsqldb.*

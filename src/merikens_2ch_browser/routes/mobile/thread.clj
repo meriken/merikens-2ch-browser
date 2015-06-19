@@ -351,7 +351,7 @@
     ))
 
 (defn convert-raw-post-to-html
-  [index handle-or-cap tripcode cap email etc message context]
+  [index handle-or-cap tripcode cap email etc message special-color context]
   (let [{:keys [service server board thread]} context
         bookmark      (:bookmark context)
         ; res-count     (:res-count context)

@@ -657,7 +657,7 @@
       (try
         (increment-http-request-count)
         ;  Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
-        (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
+        (.setPriority (Thread/currentThread) web-sever-thread-priority)
         ; (log :debug "api-get-thread-content: options:" options)
         (let [start-time-for-subject-txt (System/nanoTime)
               active?             (is-thread-active? server board thread-no)
@@ -753,14 +753,14 @@
           (if (or (nil? bookmark) (zero? bookmark))
             (db/update-bookmark service board thread-no 1))
 
-          (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
+          (.setPriority (Thread/currentThread) Thread/NORM_PRIORITY)
           (decrement-http-request-count)
           (log :info (str "    Total time: " (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms"))
           result)
         (catch Throwable t
           (log :debug "api-get-thread-content: Exception caught:" (str t))
           (print-stack-trace t)
-          (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
+          (.setPriority (Thread/currentThread) Thread/NORM_PRIORITY)
           (decrement-http-request-count)
           (html (if (nil? append-after)
                   [:div.message-error-right-pane
@@ -862,7 +862,7 @@
       (try
         (log :info "Preparing new posts in board...")
         (increment-http-request-count)
-        (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
+        (.setPriority (Thread/currentThread) web-sever-thread-priority)
         (let [start-time (System/nanoTime)
               {:keys [service server board]} (split-board-url board-url)
               board-info      (db/get-board-info service board)
@@ -891,7 +891,7 @@
                                  ])]
 
           (db/update-board-server-if-there-is-no-info service server board)
-          (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
+          (.setPriority (Thread/currentThread) Thread/NORM_PRIORITY)
           (decrement-http-request-count)
           (log :info (str "    Total time: " (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms"))
           result)
@@ -899,7 +899,7 @@
         (catch Throwable t
           (log :debug "api-get-new-posts-in-board: Exception caught:" (str t))
           (print-stack-trace t)
-          (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
+          (.setPriority (Thread/currentThread) Thread/NORM_PRIORITY)
           (decrement-http-request-count)
           (html [:div.message-error-right-pane "スレッドの読み込みに失敗しました。"]))))))
 
@@ -914,7 +914,7 @@
       (try
         (log :info "Preparing new posts...")
         (increment-http-request-count)
-        (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
+        (.setPriority (Thread/currentThread) web-sever-thread-priority)
         (let [start-time (System/nanoTime)
               result          (html
                                 [:script
@@ -928,7 +928,8 @@
 
                                 ; posts-in-thread
                                 [:div#thread-content-wrapper
-                                 (map #(let [board-info (db/get-board-info (:service %1) (:board %1))
+                                 (map #(let [_         (get-subject-txt (create-board-url (:server %1) (:board %1)) true)
+                                             board-info (db/get-board-info (:service %1) (:board %1))
                                              res-count (:res-count (db/get-thread-info (:service %1) (:board %1) (:thread-no %1)))
                                              bookmark  (db/get-bookmark (:service %1) (:board %1) (:thread-no %1))]
                                          (if (and bookmark
@@ -952,7 +953,7 @@
                                  "updateIDs();"
                                  "});"])]
 
-          (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
+          (.setPriority (Thread/currentThread) Thread/NORM_PRIORITY)
           (decrement-http-request-count)
           (log :info (str "    Total time: " (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms"))
           result)
@@ -960,7 +961,7 @@
         (catch Throwable t
           (log :error "get-new-posts: Exception caught:" (str t))
           (print-stack-trace t)
-          (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
+          (.setPriority (Thread/currentThread) Thread/NORM_PRIORITY)
           (decrement-http-request-count)
           (html [:div.message-error-right-pane "新着まとめの読み込みに失敗しました。"]))))))
 
@@ -1035,8 +1036,8 @@
   [service board thread-no post-index]
   ; (log :debug "api-update-bookmark:" service board thread-no post-index)
   (and (check-login)
-       (let [thread-no  (java.lang.Long/parseLong thread-no)
-             post-index (java.lang.Integer/parseInt post-index)
+       (let [thread-no  (Long/parseLong thread-no)
+             post-index (Integer/parseInt post-index)
              thread-info (db/get-thread-info service board thread-no)
              bookmark   (db/get-bookmark service board thread-no)
              updated?   (or (nil? bookmark) (> post-index bookmark))]
