@@ -563,7 +563,7 @@
       (if (nil? body)
         nil
         (for [item items]
-          (let [parts (if (shitaraba-url? board-url)
+          (let [parts (if (or (shitaraba-url? board-url) (machi-bbs-url? board-url))
                         (re-find #"^(([0-9]+)\.cgi),(.*)\(([0-9]+)\)$" item)
                         (re-find #"^(([0-9]+)\.dat)<>(.*) +\(([0-9]+)\)$" item))]
             (if parts
@@ -577,7 +577,7 @@
 
 (defn update-res-count-for-multiple-threads
   [items archive-threads]
-  ; (log :debug "update-res-count-for-multiple-threads:" (count items))
+  ; (log :debug "update-res-count-for-multiple-threads:" items)
   (try
     (let [threads (remove nil? (map #(try
                                        (let [{:keys [service board thread-no]} %1
