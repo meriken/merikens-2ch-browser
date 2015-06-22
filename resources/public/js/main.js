@@ -3611,6 +3611,7 @@ $(document).ready(function() {
 	$('#special-menu').html('<p><br><br>' + ajaxSpinnerBars + '</p>');
 	$('#favorite-board-list').html('<p><br><br>' + ajaxSpinnerBars + '</p>');
 	$('#server-info-panel').html('<p><br><br>' + ajaxSpinnerBars + '</p>');
+	$('#download-status-panel').html('<p><br><br>' + ajaxSpinnerBars + '</p>');
 
 	loadSpecialMenu();
 	loadFavoriteBoardList(false);

@@ -70,6 +70,23 @@
     "board_info" 1000
     5000))
 
+(defn convert-row
+  [row]
+  (let [k (keys row) v (vals row)]
+    (zipmap k
+            (map #(cond
+
+                   (and (= (Class/forName "org.postgresql.util.PGobject") (type %1))
+                        (= (java-pgobject-get-type %1) "citext"))
+                   (java-pgobject-get-value %1)
+
+                   (= (Class/forName "java.math.BigInteger") (type %1))
+                   (.longValue %1)
+
+                   :else
+                   %1)
+                 v))))
+
 (defn copy-table
   [src dest table-name]
   (log :info "Copying" table-name "table...")
@@ -87,7 +104,8 @@
                                              ")")]
                               (sql/execute! dest [(str "DELETE FROM " table-name " " where)])
                               (apply sql/insert! (concat (list dest table-keyword)
-                                                         (sql/query src [(str "SELECT * FROM " table-name " " where)])))))]
+                                                         (map convert-row
+                                                              (sql/query src [(str "SELECT * FROM " table-name " " where)]))))))]
     (doall
       (map
         #(loop []

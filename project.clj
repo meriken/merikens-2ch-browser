@@ -119,8 +119,8 @@
    [garden "1.2.5"] ; Added by Meriken.
 
    ; Images
-   [com.twelvemonkeys.imageio/imageio-core "3.0-rc5"] ; Added by Meriken. BSD
-   [com.twelvemonkeys.imageio/imageio-jpeg "3.0-rc5"] ; Added by Meriken. BSD
+   [com.twelvemonkeys.imageio/imageio-core "3.1.1"] ; Added by Meriken. BSD
+   [com.twelvemonkeys.imageio/imageio-jpeg "3.1.1"] ; Added by Meriken. BSD
 
    ; JSON
    [ring/ring-json "0.3.1"]

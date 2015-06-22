@@ -923,8 +923,8 @@
                                  (ring.util.codec/url-encode title)
                                  "'), '');"]
                                 [:script
-                                   "imageList = [];"
-                                   "resetThumbnailLists();"]
+                                 "imageList = [];"
+                                 "resetThumbnailLists();"]
 
                                 ; posts-in-thread
                                 [:div#thread-content-wrapper
@@ -932,19 +932,19 @@
                                              board-info (db/get-board-info (:service %1) (:board %1))
                                              res-count (:res-count (db/get-thread-info (:service %1) (:board %1) (:thread-no %1)))
                                              bookmark  (db/get-bookmark (:service %1) (:board %1) (:thread-no %1))]
-                                         (if (and bookmark
-                                                  (> bookmark 0)
-                                                  (> res-count bookmark))
-                                           (try
-                                             (get-new-posts-in-thread (:service %1)
-                                                                      (:server board-info)
-                                                                      (:board %1)
-                                                                      (:thread-no %1)
-                                                                      board-info)
-                                             (catch Throwable t
-                                               (log :error "get-new-posts: Exception caught:" (str t))
-                                               (print-stack-trace t)
-                                               nil))))
+                                        (if (and bookmark
+                                                 (> bookmark 0)
+                                                 (> res-count bookmark))
+                                          (try
+                                            (get-new-posts-in-thread (:service %1)
+                                                                     (:server board-info)
+                                                                     (:board %1)
+                                                                     (:thread-no %1)
+                                                                     board-info)
+                                            (catch Throwable t
+                                              (log :error "get-new-posts: Exception caught:" (str t))
+                                              (print-stack-trace t)
+                                              nil))))
                                       (thread-list-fn))]
 
                                 [:script#thread-content-run-once
@@ -977,11 +977,88 @@
   []
   (get-new-posts "「書き込み履歴」の新着まとめ" db/get-recently-posted-threads))
 
+
+
+(defn update-threads
+  [thread-list-fn]
+  (try
+    (increment-http-request-count)
+    (.setPriority (Thread/currentThread) web-sever-thread-priority)
+    (let [start-time (System/nanoTime)
+          thread-list (thread-list-fn)
+          n           (count thread-list)]
+
+      (doseq [[i thread] (map-indexed vector thread-list)]
+        (try
+          (let [{:keys [service server board thread-no]} thread
+                {:keys [original-server current-server archived]} (db/get-thread-info service board thread-no)
+                thread-url          (create-thread-url server board thread-no)
+                _                   (log :info (str "Updating thread (" (inc i) "/" n "): " thread-url))
+                active?             (is-thread-active? server board thread-no)
+
+                post-signature-head (str service "," board "," thread-no ",")
+                post-filters        (remove nil? (map #(if (and (or (= 0 (count (:board %1))) (= board (:board %1)))
+                                                                (or (not (= (:filter-type %1) "post"))
+                                                                    (re-find (re-pattern (str "^" post-signature-head)) (:pattern %1))))
+                                                        %1
+                                                        nil)
+                                                      (db/get-all-post-filters)))
+
+                bookmark            (db/get-bookmark service board thread-no)
+                context             {:thread-url           thread-url
+                                     :service              service
+                                     :server               server
+                                     :original-server      original-server
+                                     :current-server       current-server
+                                     :board                board
+                                     :thread               thread-no
+                                     :thread-no            thread-no
+                                     :thread-options       nil
+                                     :shitaraba?           (shitaraba-url? thread-url)
+                                     :machi-bbs?           (machi-bbs-url? thread-url)
+                                     :regex-search-pattern nil
+                                     :bookmark             bookmark
+                                     :download-images      (= (db/get-user-setting "download-images") "true")
+                                     :use-image-proxy      (= (db/get-system-setting "use-image-proxy") "true")
+                                     :post-filters         post-filters
+                                     :append-after         false
+                                     :convert-raw-post-to-html convert-raw-post-to-html
+                                     :active?              active?}]
+
+            (if (not archived)
+              (get-posts-in-thread context))
+            (if active?
+              (db/mark-thread-as-active service server board thread-no)
+              (db/mark-thread-as-archived service server board thread-no)))
+
+          (catch Throwable t
+            (log :error "update-threads: Exception caught:" (str t))
+            (print-stack-trace t)
+            nil)))
+
+      (.setPriority (Thread/currentThread) Thread/NORM_PRIORITY)
+      (decrement-http-request-count)
+      (log :info (str "Updated threads (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
+      "OK")
+
+    (catch Throwable t
+      (log :error "update-threads: Exception caught:" (str t))
+      (print-stack-trace t)
+      (.setPriority (Thread/currentThread) Thread/NORM_PRIORITY)
+      (decrement-http-request-count)
+      "ERROR")))
+
+(defn api-update-favorite-threads
+  []
+  (update-threads db/get-favorite-threads))
+
+
+
+
 (defn api-delete-thread-log
   [thread-url]
   ; (log :debug "api-delete-thread-log")
-  (if (not (check-login))
-    (ring.util.response/not-found "404 Not Found")
+  (if (check-login)
     (let [{:keys [server board thread]} (split-thread-url thread-url)
           service (server-to-service server)]
       (try (db/delete-dat-file service board thread)        (catch Throwable _ (log :debug "db/delete-dat-file failed")))
@@ -1058,6 +1135,7 @@
   (GET "/api-get-thread-content"
        [thread-url search-text search-type append-after]
        (api-get-thread-content (trim thread-url) search-text search-type append-after))
+
   (GET "/api-get-new-posts-in-board"
        [board-url]
        (api-get-new-posts-in-board (trim board-url)))
@@ -1070,6 +1148,10 @@
   (GET "/api-get-new-posts-in-recently-posted-threads"
        []
        (get-new-posts-in-recently-posted-threads))
+
+  (GET "/api-update-favorite-threads"
+       []
+       (api-update-favorite-threads))
 
   (GET "/api-delete-thread-log"
        [thread-url]

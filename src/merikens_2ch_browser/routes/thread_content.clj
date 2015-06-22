@@ -685,7 +685,7 @@ The most recent version will (hopefully) be stored in the database."
   (let [{:keys [service server original-server board thread thread-url]} context
         source-url (str (create-thread-url server board thread) "?v=pc")
         options    (get-options-for-get-method thread-url)
-        options    (if (net-url? thread-url)
+        options    (if (or (net-url? thread-url) (bbspink-url? thread-url))
                      (assoc options
                             :headers
                             (assoc (:headers options)

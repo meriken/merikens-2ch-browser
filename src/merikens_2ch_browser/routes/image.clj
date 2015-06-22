@@ -36,6 +36,7 @@
             [noir.request]
             [noir.session :as session]
             [noir.validation :refer [rule errors? has-value? on-error]]
+            [noir.io]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [include-css include-js]]
             [hiccup.util :refer [escape-html]]
@@ -219,7 +220,7 @@
 
 (defn set-up-download
   [url thread-url]
-  ; (log :info "set-up-download:" url thread-url)
+  ; (log :debug "set-up-download:" url thread-url)
   (try
     (cond
       ; (ng-image-url? url)
@@ -267,8 +268,7 @@
 
       (re-find #"^http://(www.amaga.me|www.uproda.net)/" url)
       (do
-        (log :info (str "Image is no longer available:\n"
-                        "    " url))
+        (log :info (str "Image is no longer available: " url))
         (db/add-download {:user_id user-id
                           :url url
                           :thread_url     thread-url
@@ -277,25 +277,24 @@
         nil)
 
       (db/get-image-with-user-id-and-url-without-content-and-thumbnail user-id url)
-      (log :info (str "Image is already in the database:\n"
-                      "    " url))
+      ; (log :info (str "Image is already in the database: " url))
+      nil
 
       ; (ng-image-url? url)
       ; (log :debug "download-image: The image (" url ") was blocked by an NG filter.")
 
       (or (db/get-active-download user-id url)
           (db/get-pending-download user-id url))
-      (log :info (str "Image is already being downloaded:\n"
-                      "    " url))
+      ; (log :info (str "Image is already being downloaded: " url))
+      nil
 
       (not (= (db/get-user-setting-with-user-id user-id "download-images") "true"))
-      (log :info (str "Image downloading is disabled:\n"
-                      "    " url))
+      ; (log :info (str "Image downloading is disabled: " url))
+      nil
 
       :else
       (do
-        (log :info (str "Started image download (retries: " retries "):\n"
-                        "    " url))
+        (log :info (str "Started image download: " url " (retries: " retries ")"))
         (db/add-download {:user_id user-id
                           :url url
                           :thread-url thread-url
@@ -335,10 +334,7 @@
                     (invalid-image? url size width height))
               (throw (Exception. "Not a valid image.")))
             (wait-for-http-requests-to-be-processed)
-            (log :info (str "Downloaded image:\n"
-                            "    " url "\n"
-                            "    " (format "dimentions: %dx%d\n" width height)
-                            "    " "retries: " retries))
+            (log :info (str "Downloaded image: " url))
             (when (and (ng-image-url? user-id url) (not (ng-image-md5-string? user-id md5-string)))
               ; Add an NG filter for the MD5 string.
               (db/add-post-filter {:user-id     user-id
@@ -375,8 +371,7 @@
           (cond
             (not download)
             (do
-              (log :info (str "Image download was aborted:\n"
-                              "     " url))
+              (log :info (str "Image download was aborted: " url))
               nil)
 
             (or (>= retries maxinum-number-of-retries-for-image-downloads)
@@ -387,8 +382,10 @@
                 (re-find #"^java.net.UnknownHostException" (str t))
                 (re-find #"^java.lang.Exception: Wrong content type:" (str t)))
             (do
-              (log :info (str "Image download failed (retries: " retries "):\n"
-                              "    " (clojure.string/replace (str t) #"\{.*\}$" "")))
+              (log :info (str "Image download failed: "
+                              url " "
+                              (clojure.string/replace (str t) #"\{.*\}$" "") " "
+                              "(retries: " retries ")"))
               (db/delete-active-download user-id url)
               (db/add-download {:user_id user-id
                                 :url url
@@ -399,9 +396,10 @@
 
             :else
             (do
-              (log :info (str "Retrying image download (retries: " retries "):\n"
-                              "    " (clojure.string/replace (str t) #"\{.*\}$" "") "\n"
-                              "    " url))
+              (log :info (str "Retrying image download: "
+                              url " "
+                              (clojure.string/replace (str t) #"\{.*\}$" "") " "
+                              "(retries: " retries ")"))
               (db/delete-active-download user-id url)
               (db/add-download {:user_id user-id
                                 :url url
@@ -638,12 +636,10 @@
           ; Serve the image to the client.
           (if (ng-image? image)
             (do
-              (log :info (str "Image was blocked by proxy:\n"
-                              "    " url))
+              (log :info (str "Image was blocked by proxy: " url))
               (noir.io/get-resource image-thumbnail-ng-src))
             (do
-              (log :info (str "Served image in database through proxy:\n"
-                              "    " url))
+              (log :info (str "Served image in database through proxy: " url))
               {:status  200
                :headers {"Content-Type" (str "image/"
                                              (cond (or thumbnail? (re-find #"^(?i)\.jpe?g$" (:extension image))) "jpeg"
@@ -654,9 +650,9 @@
                          "Cache-Control" "private"}
                :body    (ByteArrayInputStream. (if thumbnail? (:thumbnail image) (:content image)))})))
         (catch Throwable t
-          (log :error (str "Failed to download image through proxy:\n"
-                           "    " (clojure.string/replace (str t) #"(clj-http: status [0-9]+) .*$" "$1") "\n"
-                           "    " url))
+          (log :error (str "Failed to download image through proxy: "
+                           url " "
+                           (clojure.string/replace (str t) #"(clj-http: status [0-9]+) .*$" "$1")))
           ; (print-stack-trace t)
           (decrement-http-request-count)
           nil))
@@ -690,8 +686,7 @@
             (if (or (nil? thumbnail)
                     (invalid-image? url size width height))
               (throw (Exception. "Not a valid image.")))
-            (log :info (str "Downloaded image through proxy:\n"
-                            "    " url))
+            (log :info (str "Downloaded image through proxy: " url))
 
             ; Save the image to the database.
             (db/delete-active-download user-id url)
