@@ -22,7 +22,6 @@ pom.xml
 /merikens-2ch-browser.hsqldb.*
 /merikens-2ch-browser-backup.h2.db
 /merikens-2ch-browser-backup.hsqldb.*
-/merikens-2ch-browser/merikens-2ch-browser.jar
 /merikens-2ch-browser*.zip
 /.idea
 /*.iml
