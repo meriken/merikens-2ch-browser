@@ -990,8 +990,8 @@
 
       (doseq [[i thread] (map-indexed vector thread-list)]
         (try
-          (let [{:keys [service server board thread-no]} thread
-                {:keys [original-server current-server archived]} (db/get-thread-info service board thread-no)
+          (let [{:keys [service board thread-no]} thread
+                {:keys [server original-server current-server archived]} (db/get-thread-info service board thread-no)
                 thread-url          (create-thread-url server board thread-no)
                 _                   (log :info (str "Updating thread (" (inc i) "/" n "): " thread-url))
                 active?             (is-thread-active? server board thread-no)
@@ -1048,9 +1048,11 @@
       (decrement-http-request-count)
       "ERROR")))
 
-(defn api-update-favorite-threads
+(defn api-update-special-threads
   []
-  (update-threads db/get-favorite-threads))
+  (update-threads db/get-favorite-threads)
+  (update-threads db/get-recently-viewed-threads)
+  (update-threads db/get-recently-posted-threads))
 
 
 
@@ -1149,9 +1151,9 @@
        []
        (get-new-posts-in-recently-posted-threads))
 
-  (GET "/api-update-favorite-threads"
+  (GET "/api-update-special-threads"
        []
-       (api-update-favorite-threads))
+       (api-update-special-threads))
 
   (GET "/api-delete-thread-log"
        [thread-url]

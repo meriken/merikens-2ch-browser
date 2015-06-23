@@ -194,6 +194,14 @@
       (do
         (session/put! :user user)
         (session/put! :login-string (ring.util.response/get-header noir.request/*request* "user-agent"))
+        ; Set default user settings.
+        (if (nil? (db/get-user-setting "enable-automatic-updates-for-special-menu"))
+          (db/update-user-setting "enable-automatic-updates-for-special-menu" "true"))
+        (if (nil? (db/get-user-setting "enable-automatic-updates-for-favorite-board-list"))
+          (db/update-user-setting "enable-automatic-updates-for-favorite-board-list" "true"))
+        (if (nil? (db/get-user-setting "enable-automatic-updates-for-thread-list"))
+          (db/update-user-setting "enable-automatic-updates-for-thread-list" "true"))
+        ;
         (redirect (if (> (count return-to) 0) return-to "/"))))))
 
 (defn handle-logout [return-to admin-only]

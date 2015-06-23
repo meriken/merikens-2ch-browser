@@ -496,6 +496,7 @@ function adjustComponents() {
 	$('#thread-search-text-field').width($('#thread-list-tools-below-board-name').width() * 0.22);
 	var boardURLTextFieldWidth =   $('#thread-list-tools-below-board-name').width()
 	                             - $('#refresh-thread-list-button').outerWidth(true)
+	                             - $('#automatic-updates-for-thread-list-checkbox-label').outerWidth(true)
 	                             - $('#open-post-window-button').outerWidth(true)
 	                             - $('#log-list-mode-checkbox-label').outerWidth(true)
 	                             - $('#open-original-board-button').outerWidth(true)
@@ -560,20 +561,25 @@ $(document).ready(function() {
 }); 
 
 var previousLoadFavoriteBoardListRequest = null;
-var previousLoadFavoriteBoardListRequestCount = 0;
+var loadFavoriteBoardListRequestCount = 0;
 
 function loadFavoriteBoardList(refresh) {
 	if (isFavoriteBoardBeingDragged)
 		return;
 	
 	if (previousLoadFavoriteBoardListRequest
-	    && previousLoadFavoriteBoardListRequestCount >= 2) {
+	    && loadFavoriteBoardListRequestCount >= 2) {
 		// console.log('previousLoadFavoriteBoardListRequest.abort();');
 		previousLoadFavoriteBoardListRequest.abort();
+		previousLoadFavoriteBoardListRequest = null;
 	}
+	++loadFavoriteBoardListRequestCount;
 	
 	previousLoadFavoriteBoardListRequest = $.ajax({ 
-		url: '/api-get-favorite-board-list' + (refresh ? '?bubbles=1&refresh=1' : ''),
+		url: '/api-get-favorite-board-list'
+		     + (refresh                                                                           ? '?bubbles=1&refresh=1' :
+		        $('#automatic-updates-for-favorite-board-list-checkbox').is(':checked') ? '?question-mark=1' :
+		                                                                                             '?question-mark=0'  ),
 		async: true,
 		success: function(result){
 			if (!isFavoriteBoardBeingDragged)
@@ -584,8 +590,19 @@ function loadFavoriteBoardList(refresh) {
 			previousLoadFavoriteBoardListRequest = null;
 		}
 	});
-	++previousLoadFavoriteBoardListRequestCount;
 }
+
+function updateFavoriteBoardList() {
+	if (previousLoadFavoriteBoardListRequest) {
+		previousLoadFavoriteBoardListRequest.abort();
+		previousLoadFavoriteBoardListRequest = null;
+	}
+    loadFavoriteBoardListRequestCount = 0;
+    loadFavoriteBoardList(false);
+    loadFavoriteBoardList(true);
+}
+
+
 
 function openAccountMenu()
 {
@@ -624,6 +641,7 @@ function closeServerInfoPanel()
 function openFavoriteBoardList()
 {
 	$('#favorite-board-list').show(); 
+	$('#favorite-board-list-toolbar').show();
 	$('#favorite-board-list-title').unbind('click').click(function () {
 		closeFavoriteBoardList();
 	});	
@@ -632,6 +650,7 @@ function openFavoriteBoardList()
 function closeFavoriteBoardList()
 {
 	$('#favorite-board-list').hide(); 
+	$('#favorite-board-list-toolbar').hide();
 	$('#favorite-board-list-title').unbind('click').click(function () {
 		openFavoriteBoardList();
     });		
@@ -640,6 +659,7 @@ function closeFavoriteBoardList()
 function openSpecialMenu()
 {
 	$('#special-menu').show(); 
+	$('#special-menu-toolbar').show();
 	$('#special-menu-title').unbind('click').click(function () {
 		closeSpecialMenu();
 	});	
@@ -648,20 +668,27 @@ function openSpecialMenu()
 function closeSpecialMenu()
 {
 	$('#special-menu').hide(); 
+	$('#special-menu-toolbar').hide();
 	$('#special-menu-title').unbind('click').click(function () {
 		openSpecialMenu();
     });		
 }
 
-function loadSpecialMenu(counter) {
-	if (typeof counter == 'undefined') counter = 0;
+var previousLoadSpecialMenuRequest = null;
+var loadSpecialMenuRequestCount = 0;
 
-	// if (counter <= 0)
-	//	$('#special-menu').html('<p><br><br>' + ajaxSpinnerBars + '</p>');
-	$.ajax({ 
-		url:   '/api-get-special-menu-content'
-		     + ((counter > 0) ? '?bubbles=1' : '?bubbles=0')
-		     + ((counter > 0) ? '&refresh=1' : '&refresh=0'),
+function loadSpecialMenu(refresh) {
+    if (previousLoadSpecialMenuRequest && loadSpecialMenuRequestCount > 1) {
+        previousLoadSpecialMenuRequest.abort();
+        previousLoadSpecialMenuRequest = null;
+    }
+    ++loadSpecialMenuRequestCount;
+
+	previousLoadSpecialMenuRequest = $.ajax({
+		url:     '/api-get-special-menu-content?'
+		       + (refresh                                                                   ? 'bubbles=1&refresh=1' :
+		          $('#automatic-updates-for-special-menu-checkbox').is(':checked') ? 'question-mark=1'     :
+		                                                                                      'question-mark=0'      ),
 		async: true,
 		success: function(result){
 			$('#special-menu').html(result);
@@ -669,9 +696,20 @@ function loadSpecialMenu(counter) {
 		error:  function(result, textStatus, errorThrown){
 		},
 		complete: function(result, textStatus) {
-			setTimeout(function() { loadSpecialMenu(counter + 1); }, (counter <= 0) ? 0 : 10 * 60 * 1000);
+			previousLoadSpecialMenuRequest = null;
 		}
 	});
+}
+
+function updateSpecialMenu()
+{
+    if (previousLoadSpecialMenuRequest) {
+        previousLoadSpecialMenuRequest.abort();
+        previousLoadSpecialMenuRequest = null;
+    }
+    loadSpecialMenuRequestCount = 0;
+    loadSpecialMenu(false);
+    loadSpecialMenu(true);
 }
 
 function openBBSMenu(innerBody, title, menuURL)
@@ -752,7 +790,7 @@ function updateServerInfoPanel() {
 function configureImageDownloading()
 {
 	$.ajax({ 
-		url: '/api-configure-image-downloading?enable=' + ($('#automatic-downloading-checkbox').is(':checked' )? '1' : '0'), 
+		url: '/api-configure-image-downloading?enable=' + ($('#automatic-downloading-checkbox').is(':checked') ? '1' : '0'),
 		async: true,
 		success: function(result){
 			updateDownloadStatus();
@@ -1389,7 +1427,8 @@ function displayHtmlFileListMenu(event) {
 }
 
 function updateNewPostCounts() {
-	if (threadURLList.length <= thresholdForUpdatingNewPostCounts) {
+	if (   $('#automatic-updates-for-thread-list-checkbox').is(':checked')
+	    && threadURLList.length <= thresholdForUpdatingNewPostCounts) {
 		var threadURLListInPlainText = "";
 		
 		$(threadURLList).each(function(index, element) {
@@ -3596,6 +3635,22 @@ function openAbornIDsWindow() {
 	abornIDsWindow.focus();
 }
 
+function updateSystemSetting(settingName, value)
+{
+	$.ajax({
+		url: '/api-update-system-setting?setting-name=' + encodeURIComponent(settingName) + '&value=' + encodeURIComponent(value),
+		async: true
+	});
+}
+
+function updateUserSetting(settingName, value)
+{
+	$.ajax({
+		url: '/api-update-user-setting?setting-name=' + encodeURIComponent(settingName) + '&value=' + encodeURIComponent(value),
+		async: true
+	});
+}
+
 
 
 ////////////////////
@@ -3603,19 +3658,29 @@ function openAbornIDsWindow() {
 ////////////////////
 
 function autoloadFavoriteBoardList() {
-	loadFavoriteBoardList(true);
+	if ($('#automatic-updates-for-favorite-board-list-checkbox').is(':checked'))
+	    loadFavoriteBoardList(true);
 	setTimeout(autoloadFavoriteBoardList, 60000);
 }
 
-$(document).ready(function() { 
+function autoloadSpecialMenu() {
+	if ($('#automatic-updates-for-special-menu-checkbox').is(':checked'))
+	    loadSpecialMenu(true);
+	setTimeout(autoloadSpecialMenu, 10 * 60000);
+}
+
+$(document).ready(function() {
 	$('#special-menu').html('<p><br><br>' + ajaxSpinnerBars + '</p>');
 	$('#favorite-board-list').html('<p><br><br>' + ajaxSpinnerBars + '</p>');
 	$('#server-info-panel').html('<p><br><br>' + ajaxSpinnerBars + '</p>');
 	$('#download-status-panel').html('<p><br><br>' + ajaxSpinnerBars + '</p>');
 
-	loadSpecialMenu();
+	loadSpecialMenu(false);
+	autoloadSpecialMenu();
+
 	loadFavoriteBoardList(false);
 	autoloadFavoriteBoardList();
+
 	updateServerInfoPanel();
 	updateDownloadStatusPanel();
 }); 

@@ -807,20 +807,19 @@
            thread-list)))
 
 (defn special-menu-item-with-thread-list
-  [id text left-click right-click middle-click bubble-click thread-list bubbles refresh]
+  [id text left-click right-click middle-click bubble-click thread-list question-mark bubbles refresh]
   (let [new-post-count (if bubbles (count-new-posts-in-thread-list thread-list refresh) nil)
         new-post-bubble-id (random-element-id)]
     (list
       [:div.bbs-menu-item {:id id}
        [:div {:style (str "float:left;" (if (and new-post-count (> new-post-count 0)) "font-weight:bold;" ""))} text]
-       (if (or (not bubbles) (or (nil? new-post-count) (<= new-post-count 0)))
-         ""
+       (if (or question-mark (and bubbles new-post-count))
          [:div {:style "float:right;"}
           [:div {:id new-post-bubble-id
                  :class (str "bubble "
                              "new-posts "
                              (if (and new-post-count (> new-post-count 0)) "non-zero " ""))}
-           new-post-count]])]
+           (if question-mark [:span {:class "blink"} "?"] new-post-count)]])]
       (set-click-event-handler (str "#" id) left-click right-click middle-click)
       [:script
        "$('#" new-post-bubble-id "').click(function(e) {"
@@ -830,7 +829,7 @@
        "});"])))
 
 (defn api-get-special-menu-content
-  [bubbles refresh]
+  [question-mark bubbles refresh]
   ; (log :debug "api-get-special-menu-content:" bubbles refresh)
   (if (not (check-login))
     (html [:script "open('/login', '_self');"])
@@ -846,7 +845,8 @@
                              (nth %1 5)
                              (nth %1 6)
                              (nth %1 7)
-                             (nth %1 8))
+                             (nth %1 8)
+                             (nth %1 9))
                           (list (list "menu-item-favorite-threads"
                                       "お気にスレ"
                                       "loadFavoriteThreadList(false);"
@@ -854,6 +854,7 @@
                                       "loadFavoriteThreadList(false, '', '', true);"
                                       "loadNewPostsInFavoriteThreads();"
                                       (db/get-favorite-threads)
+                                      question-mark
                                       bubbles
                                       refresh)
                                 (list "menu-item-recently-viewed-threads"
@@ -863,6 +864,7 @@
                                       "loadRecentlyViewedThreadList(false, '', '', true);"
                                       "loadNewPostsInRecentlyViewedThreads();"
                                       (db/get-recently-viewed-threads)
+                                      question-mark
                                       bubbles
                                       refresh)
                                 (list "menu-item-recently-posted-threads"
@@ -872,6 +874,7 @@
                                       "loadRecentlyPostedThreadList(false, '', '', true);"
                                       "loadNewPostsInRecentlyPostedThreads();"
                                       (db/get-recently-posted-threads)
+                                      question-mark
                                       bubbles
                                       refresh)
                                 (list "menu-item-dat-files"
@@ -882,6 +885,7 @@
                                       nil
                                       nil
                                       false
+                                      false
                                       false)
                                 (list "menu-item-html-files"
                                       "HTMLファイル一覧"
@@ -890,6 +894,7 @@
                                       "loadHtmlFileList(false, '', '', true);"
                                       nil
                                       nil
+                                      false
                                       false
                                       false)))
 
@@ -986,8 +991,8 @@
        (api-get-similar-thread-list (trim thread-url) ie))
 
   (GET "/api-get-special-menu-content"
-       [bubbles refresh]
-       (api-get-special-menu-content (= bubbles "1") (= refresh "1")))
+       [question-mark bubbles refresh]
+       (api-get-special-menu-content (= question-mark "1") (= bubbles "1") (= refresh "1")))
   (GET "/api-get-favorite-thread-list"
        [refresh search-text search-type ie]
        (api-get-favorite-thread-list refresh search-text search-type ie))

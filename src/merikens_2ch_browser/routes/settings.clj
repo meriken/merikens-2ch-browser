@@ -322,29 +322,39 @@
 ;;;;;;;;;;
 
 (defroutes settings-routes
-  (GET  "/admin-settings" [] (admin-settings-page))
-  (POST "/admin-settings" [allow-new-user-accounts] (handle-admin-settings allow-new-user-accounts))
+           (GET  "/admin-settings" [] (admin-settings-page))
+           (POST "/admin-settings" [allow-new-user-accounts] (handle-admin-settings allow-new-user-accounts))
 
-  (GET  "/user-settings" [] (user-settings-page))
-  (POST "/user-settings"
-        [use-p2-to-post p2-email p2-password use-ronin ronin-email ronin-secret-key]
-        (handle-user-settings use-p2-to-post p2-email p2-password use-ronin ronin-email ronin-secret-key))
+           (GET  "/user-settings" [] (user-settings-page))
+           (POST "/user-settings"
+                 [use-p2-to-post p2-email p2-password use-ronin ronin-email ronin-secret-key]
+             (handle-user-settings use-p2-to-post p2-email p2-password use-ronin ronin-email ronin-secret-key))
 
-  (GET  "/image-download-settings" [] (image-download-settings-page))
-  (POST "/image-download-settings"
-        [save-downloaded-images use-image-proxy]
-        (handle-image-download-settings save-downloaded-images use-image-proxy))
+           (GET  "/image-download-settings" [] (image-download-settings-page))
+           (POST "/image-download-settings"
+                 [save-downloaded-images use-image-proxy]
+             (handle-image-download-settings save-downloaded-images use-image-proxy))
 
-  (GET  "/aborn-filters" [] (aborn-filters-page))
-  (GET  "/api-aborn-filters" [] (api-aborn-filters-get))
-  (POST "/api-aborn-filters" {body :body} (api-aborn-filters-post body))
+           (GET "/api-update-system-setting"
+                [setting-name value]
+             (db/update-system-setting setting-name value)
+             "OK")
+           (GET "/api-update-user-setting"
+                [setting-name value]
+             (log :debug "api-update-user-setting")
+             (db/update-user-setting setting-name value)
+             "OK")
 
-  (GET  "/aborn-posts" [] (aborn-posts-page))
-  (GET  "/api-aborn-posts" [] (api-aborn-posts-get))
-  (POST "/api-aborn-posts" {body :body} (api-aborn-posts-post body))
+           (GET  "/aborn-filters" [] (aborn-filters-page))
+           (GET  "/api-aborn-filters" [] (api-aborn-filters-get))
+           (POST "/api-aborn-filters" {body :body} (api-aborn-filters-post body))
 
-  (GET  "/aborn-ids" [] (aborn-ids-page))
-  (GET  "/api-aborn-ids" [] (api-aborn-ids-get))
-  (POST "/api-aborn-ids" {body :body} (api-aborn-ids-post body))
+           (GET  "/aborn-posts" [] (aborn-posts-page))
+           (GET  "/api-aborn-posts" [] (api-aborn-posts-get))
+           (POST "/api-aborn-posts" {body :body} (api-aborn-posts-post body))
 
-  (GET  "/shutdown" [] (shutdown)))
+           (GET  "/aborn-ids" [] (aborn-ids-page))
+           (GET  "/api-aborn-ids" [] (api-aborn-ids-get))
+           (POST "/api-aborn-ids" {body :body} (api-aborn-ids-post body))
+
+           (GET  "/shutdown" [] (shutdown)))

@@ -270,6 +270,13 @@
 
               (= (first left-pane) :favorite-boards)
               (list [:h2#favorite-board-list-title "お気に板"]
+                    [:div#favorite-board-list-toolbar.left-panes-inner-body.bbs-menu-tools
+                     (compact-javascript-button "新着更新" "updateFavoriteBoardList();")
+                     (compact-javascript-checkbox
+                       "自動更新"
+                       (if (= (db/get-user-setting "enable-automatic-updates-for-favorite-board-list") "true") true false)
+                       "updateUserSetting('enable-automatic-updates-for-favorite-board-list', ($('#automatic-updates-for-favorite-board-list-checkbox').is(':checked') ? 'true' : 'false'));"
+                       :id "automatic-updates-for-favorite-board-list-checkbox")]
                     [:div#favorite-board-list.left-panes-inner-body]
                     (if (= (second left-pane) :open)
                       [:script "openFavoriteBoardList();"]
@@ -277,6 +284,18 @@
 
               (= (first left-pane) :special-menu)
               (list [:h2#special-menu-title "特別"]
+                    [:div#special-menu-toolbar.left-panes-inner-body.bbs-menu-tools
+                     (compact-javascript-button "新着更新" "updateSpecialMenu();")
+                     (compact-javascript-checkbox
+                       "自動更新"
+                       (if (= (db/get-user-setting "enable-automatic-updates-for-special-menu") "true") true false)
+                       "updateUserSetting('enable-automatic-updates-for-special-menu', ($('#automatic-updates-for-special-menu-checkbox').is(':checked') ? 'true' : 'false'));"
+                       :id "automatic-updates-for-special-menu-checkbox")
+                     (compact-javascript-button
+                       "スレ取得"
+                       (str "$('#update-special-threads-button').prop('disabled', true);"
+                            "$.ajax({ url: '/api-update-special-threads', async: true, complete: function(result, textStatus) { $('#update-special-threads-button').prop('disabled', false); }});")
+                       :id "update-special-threads-button")]
                     [:div#special-menu.left-panes-inner-body]
                     (if (= (second left-pane) :open)
                       [:script "openSpecialMenu();"]
@@ -312,13 +331,7 @@
 
               (= (first left-pane) :image-download-info)
               (list [:h2#download-status-panel-title "自動画像ダウンロード"]
-                    [:div#download-status-panel.left-panes-inner-body.bbs-menu-inner-body]
-                    [:script
-                     "$(document).ready(function() {"
-                     "updateDownloadStatusPanel();"
-                     "openDownloadStatusPanel();"
-                     "});"]
-                    [:div#download-status-panel-toolbar.left-panes-inner-body.bbs-menu-tools-at-bottom
+                    [:div#download-status-panel-toolbar.left-panes-inner-body.bbs-menu-tools
                      (compact-javascript-checkbox
                        "有効"
                        (if (= (db/get-user-setting "download-images") "true") true false)
@@ -326,6 +339,12 @@
                        :id "automatic-downloading-checkbox")
                      (compact-javascript-button "中断" "stopCurrentDownloads();")
                      (if (check-admin-login) (compact-javascript-button "設定" "openImageDownloadSettingsWindow();"))]
+                    [:div#download-status-panel.left-panes-inner-body.bbs-menu-inner-body]
+                    [:script
+                     "$(document).ready(function() {"
+                     "updateDownloadStatusPanel();"
+                     "openDownloadStatusPanel();"
+                     "});"]
                     [:script
                      "$(document).ready(function() {"
                      (if (= (second left-pane) :open)
@@ -367,6 +386,12 @@
            "updateStarForFavoriteBoard();"
            "});"]
           (compact-javascript-button "新着更新"   "refreshThreadList();"    :id "refresh-thread-list-button")
+          (compact-javascript-checkbox
+            "自動更新"
+            (if (= (db/get-user-setting "enable-automatic-updates-for-thread-list") "true") true false)
+            "updateUserSetting('enable-automatic-updates-for-thread-list', ($('#automatic-updates-for-thread-list-checkbox').is(':checked') ? 'true' : 'false'));"
+            :id "automatic-updates-for-thread-list-checkbox"
+            :label-id "automatic-updates-for-thread-list-checkbox-label")
           (compact-javascript-button "スレ立て" "openPostWindow(true);"   :id "open-post-window-button")
           (compact-javascript-checkbox "ログ一覧" false "toggleLogListMode();" :id "log-list-mode-checkbox" :label-id "log-list-mode-checkbox-label")
           (compact-javascript-button "元板"   "openOriginalBoard();"    :id "open-original-board-button")

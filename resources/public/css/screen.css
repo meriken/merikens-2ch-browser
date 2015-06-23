@@ -659,7 +659,7 @@ div#left-panes-content > div:last-child {
 	cursor: pointer;
 }
 
-div.bbs-menu-tools-at-bottom {
+div.bbs-menu-tools {
 	margin-bottom: 0;
 	padding: 2px 2px;
 
@@ -672,7 +672,7 @@ div.bbs-menu-tools-at-bottom {
 	border-radius:      0;
 	
 	overflow: hidden;
-	text-align: center;
+	text-align: left;
 }
 
 div.bbs-menu-tools-at-bottom:last-child {
@@ -1695,7 +1695,7 @@ body.simple-layout,
 div#thread-list-tools-below-board-name,
 div#thread-content-tools-below-thread-title,
 div#thread-content-tools-at-bottom,
-div.bbs-menu-tools-at-bottom {
+div.bbs-menu-tools {
 	background-color: #BACDED;
 }
 
@@ -1739,6 +1739,10 @@ input[type="submit"].compact:active {
 	-moz-box-shadow:    1px 1px 1px #9BB7E6;
 	-webkit-box-shadow: 1px 1px 1px #9BB7E6;
 	box-shadow:         1px 1px 1px #9BB7E6;
+}
+
+button.compact[disabled] {
+     color: #86A8DF;
 }
 
 .scrollbar::-webkit-scrollbar {
@@ -1854,4 +1858,23 @@ div.bubble.new-threads.non-zero:hover {
 
 div.bubble.new-posts.non-zero:hover {
 	background-color: #aa0000;
+}
+
+
+
+/* BLINKING */
+
+@keyframes blink {
+  0% { opacity: 1.0; }
+  50% { opacity: 0.0; }
+  100% { opacity: 1.0; }
+}
+@-webkit-keyframes blink {
+  0% { opacity: 1.0; }
+  50% { opacity: 0.0; }
+  100% { opacity: 1.0; }
+}
+.blink {
+  animation: blink 1s step-start 0s infinite;
+  -webkit-animation: blink 1s step-start 0s infinite;
 }

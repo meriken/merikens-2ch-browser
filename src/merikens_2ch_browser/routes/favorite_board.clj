@@ -87,7 +87,7 @@
          :new-posts   (apply + (map :new-posts results))}))))
 
 (defn favorite-board-list-item-to-html
-  [favorite-board bubbles refresh]
+  [favorite-board question-mark bubbles refresh]
   (let [{:keys [service board]} favorite-board
         {:keys [server board-name]} (db/get-board-info service board)
         board-name (if board-name board-name "(板名未設定)")
@@ -111,20 +111,25 @@
                     :style (str "float:left;"
                                 (if (and bubbles (or (> new-threads 0) (> new-posts 0))) "font-weight:bold;" ""))}
               (escape-html board-name-plus)]
-             (if bubbles
-               (let []
-             [:div {:style "float:right;"}
-              (if (and bubbles (>= new-threads 0)) [:div {:id new-thread-bubble-id
-                                                          :class (str "bubble "
-                                                                      "new-threads "
-                                                                      (if (> new-threads 0) "non-zero " ""))}
-                                                    new-threads])
-              (if (and bubbles (>= new-posts   0)) [:div {:id new-post-bubble-id
+             (cond
+               question-mark
+               [:div {:style "float:right;"}
+                ; [:div {:id new-thread-bubble-id :class "bubble new-threads"} "?"]
+                [:div {:id new-thread-bubble-id :class "bubble new-posts"} [:span {:class "blink"} "?"]]]
+
+               bubbles
+               [:div {:style "float:right;"}
+                (if (and bubbles (> new-threads 0)) [:div {:id new-thread-bubble-id
+                                                           :class (str "bubble "
+                                                                        "new-threads "
+                                                                        (if (> new-threads 0) "non-zero " ""))}
+                                                      new-threads])
+                (if (and bubbles (>= new-posts 0)) [:div {:id new-post-bubble-id
                                                           :class (str "bubble "
                                                                       "new-posts "
                                                                       (if (> new-posts 0) "non-zero " "")
                                                                       new-post-count-class)}
-                                                    new-posts])]))))
+                                                    new-posts])])))
          (catch Throwable _
            (escape-html board-name-plus)))]
       [:script
@@ -173,7 +178,7 @@
        "});"])))
 
 (defn api-get-favorite-board-list
-  [bubbles refresh]
+  [question-mark bubbles refresh]
   ; (log :debug "api-get-favorite-board-list")
   (if (not (check-login))
     (html [:script "open('/login', '_self');"])
@@ -184,8 +189,9 @@
                            :builtin
                            favorite-board-list-item-to-html
                            (db/get-favorite-boards)
-                           (repeat (= bubbles "1"))
-                           (repeat (= refresh "1"))))]
+                           (repeat question-mark)
+                           (repeat bubbles)
+                           (repeat refresh)))]
         (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
         (decrement-http-request-count)
         result)
@@ -304,8 +310,8 @@
 
 (defroutes favorite-board-routes
   (GET "/api-get-favorite-board-list"
-       [bubbles refresh]
-       (api-get-favorite-board-list bubbles refresh))
+       [question-mark bubbles refresh]
+       (api-get-favorite-board-list (= question-mark "1") (= bubbles "1") (= refresh "1")))
   (GET "/api-is-favorite-board"
        [board-url]
        (api-is-favorite-board (trim board-url)))

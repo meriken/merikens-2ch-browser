@@ -101,6 +101,11 @@
   ; Set default system settings.
   (if (nil? (db/get-system-setting "use-image-proxy"))
     (db/update-system-setting "use-image-proxy" "true"))
+  (if (nil? (db/get-system-setting "automatic-updates-for-favorite-board-list"))
+    (db/update-system-setting "automatic-updates-for-favorite-board-list" "true"))
+  (if (nil? (db/get-system-setting "automatic-updates-for-special-menu-checkbox"))
+    (db/update-system-setting "automatic-updates-for-special-menu-checkbox" "true"))
+  ; automatic-updates-for-favorite-board-list
 
   (start-download-manager)
 
