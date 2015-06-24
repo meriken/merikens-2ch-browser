@@ -30,7 +30,7 @@
 
 
 
-(def app-name "Meriken's 2ch Browser 0.1.25")
+(def app-name "Meriken's 2ch Browser 0.1.26")
 
 (def config-file-path "./merikens-2ch-browser.clj")
 

@@ -82,13 +82,13 @@
     (let [body (:body (client/get menu-url (get-options-for-get-method menu-url)))]
       (for [item (split body #"\n")]
         (cond
-          (re-find #"^<BR><BR><B>(チャット|ツール類|他のサイト|おとなの時間|特別企画)</B><BR>" item)
+          (re-find #"<B>(チャット|ツール類|他のサイト|おとなの時間|特別企画)</B>" item)
           nil
 
           (re-find #"http://info.2ch.sc/guide/|お絵かき板|＋記者登録所" item)
           nil
 
-          (re-find #"^<BR><BR><B>" item)
+          (re-find #"<B>" item)
           (let [heading-id (random-string 16)
                 items-id   (random-string 16)]
             (list
@@ -96,8 +96,8 @@
               [:div.bbs-menu-item.bbs-menu-heading
                {:id heading-id}
                (escape-html (-> item
-                              (clojure.string/replace #"^<BR><BR><B>" "")
-                              (clojure.string/replace #"</B>.*<BR>$"  "")))]
+                              (clojure.string/replace #"^.*<B>" "")
+                              (clojure.string/replace #"</B>.*$"  "")))]
               (set-mousedown-event-handler (str "#" heading-id)
                                            (str "if ($('#" items-id "').css('display') !== 'none') {"
                                                 "$('#" items-id "').hide();"
@@ -109,14 +109,14 @@
               "<div id=" items-id ">"
               ))
 
-          (re-find #"^<A HREF=http://[a-z0-9.]+(2ch\.net|bbspink\.com|2ch\.sc|open2ch\.net|machi\.to)/[a-zA-Z0-9]+/( TARGET=_blank)?>" item)
+          (re-find #"^<(A HREF|a href)=http://[a-z0-9.]+(2ch\.net|bbspink\.com|2ch\.sc|open2ch\.net|machi\.to)/[a-zA-Z0-9]+/( TARGET=_blank)?>" item)
           (let [item-id (random-string 16)
                 board-url  (-> item
-                             (clojure.string/replace #"^<A HREF=" "")
+                             (clojure.string/replace #"^<(A HREF|a href)=" "")
                              (clojure.string/replace #"( TARGET=_blank)?>.*$" ""))
                 board-name (-> item
-                             (clojure.string/replace #"^<A HREF=http://[a-z0-9.]+(2ch\.net|bbspink\.com|2ch\.sc|open2ch\.net|machi\.to)/[a-zA-Z0-9]+/( TARGET=_blank)?>" "")
-                             (clojure.string/replace #"</A>(<BR>|<br>)?$" ""))
+                             (clojure.string/replace #"^<(A HREF|a href)=http://[a-z0-9.]+(2ch\.net|bbspink\.com|2ch\.sc|open2ch\.net|machi\.to)/[a-zA-Z0-9]+/( TARGET=_blank)?>" "")
+                             (clojure.string/replace #"</[Aa]>(<BR>|<br>)?$" ""))
                 ; site-name  (-> board-url
                 ;              (clojure.string/replace #"^http://[^.]+\." "")
                 ;              (clojure.string/replace #"/.*$" ""))

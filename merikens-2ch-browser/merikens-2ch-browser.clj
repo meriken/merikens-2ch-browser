@@ -27,7 +27,7 @@
 
 (ns merikens-2ch-browser.param
   (:require [garden.core :refer [css]])
-  (:import (:import java.lang.Thread)))
+  (:import java.lang.Thread))
 
 (def default-port 50000)
 

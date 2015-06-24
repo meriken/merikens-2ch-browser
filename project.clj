@@ -27,7 +27,7 @@
 
 (defproject
   merikens-2ch-browser
-  "0.1.25"
+  "0.1.26"
   :description
   "Meriken's 2ch Browser is a dedicated browser for 2ch.net, 2ch.sc, open2ch.net and other 2ch-compatible online forums."
   :ring
