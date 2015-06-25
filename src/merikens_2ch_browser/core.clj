@@ -42,6 +42,7 @@
             [merikens-2ch-browser.db.core :as db]
             [merikens-2ch-browser.db.backup :as db-backup]
             [merikens-2ch-browser.routes.image :refer [start-download-manager load-default-image-ng-filters update-thumbnails]]
+            [merikens-2ch-browser.routes.home :refer [get-bbs-menu-content]]
             [merikens-2ch-browser.import :refer [import-rep2-data]])
   (:gen-class))
 
@@ -112,6 +113,18 @@
   (load-default-image-ng-filters)
 
   (.addShutdownHook (Runtime/getRuntime) (Thread. (fn [] (stop-app))))
+
+  (log :info "Updating board information...")
+  (db/update-board-name "2ch.net" "qb5.2ch.net" "saku2ch" "íœ—v¿")
+  (db/update-board-name "2ch.net" "qb7.2ch.net" "operate2" "‰^—pî•ñ(‹à)")
+  (db/update-board-name "2ch.net" "peace.2ch.net" "sakhalin" "2chŠJ”­º")
+  (db/update-board-name "2ch.net" "peace.2ch.net" "myanmar" "‚Ü‚½’§íB")
+  (db/update-board-name "2ch.net" "peace.2ch.net" "yangon" "‚Ü‚½’§í‚QB")
+  (db/update-board-name "2ch.net" "invisible.2ch.net" "invisible" "INVISIBLE")
+  (db/update-board-name "2ch.net" "hato.2ch.net" "sato" "”EÒ‚Ì—¢")
+  (db/update-board-name "2ch.net" "ipv6.2ch.net" "refuge" "”ğ“ïŠ")
+  (db/update-board-name "2ch.net" "yuzuru.2ch.net" "mu" "Œ¶‚Ì‘å—¤")
+  (doall (pmap #(try (get-bbs-menu-content %1 true) (catch Throwable _)) ["2ch.sc" "2ch.net" "open2ch.net"]))
 
   (log :info app-name "started successfully."))
 

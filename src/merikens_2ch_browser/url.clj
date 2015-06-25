@@ -401,3 +401,13 @@
                (or (net-url? thread-url) (bbspink-url? thread-url)))
           (not (or (net-url? thread-url) (bbspink-url? thread-url))))
           (throw (Exception. "Threads in JSON are not available."))))
+
+
+
+(defn get-menu-url
+  [service]
+  (case service
+    "2ch.sc" "http://menu.2ch.sc/bbsmenu.html"
+    "2ch.net" "http://menu.2ch.net/bbsmenu.html"
+    "open2ch.net" "http://open2ch.net/menu/pc_menu.html"
+    "machi.to" "http://kita.jikkyo.org/cbm/cbm.cgi/m0.99/bbsmenu.htlm"))

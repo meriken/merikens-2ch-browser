@@ -712,16 +712,17 @@ function updateSpecialMenu()
     loadSpecialMenu(true);
 }
 
-function openBBSMenu(innerBody, title, menuURL)
+function openBBSMenu(innerBody, title, toolbar, service, refresh)
 {
 	$(innerBody).html('<p><br><br>' + ajaxSpinnerBars + '</p>');
   	$(innerBody).show()
+  	$(toolbar).show()
 	$(title).unbind('click').click(function () {
-		closeBBSMenu(innerBody, title, menuURL);
+		closeBBSMenu(innerBody, title, toolbar, service);
 	});		 
 	
 	$.ajax({ 
-		url: '/api-get-bbs-menu-content?menu-url=' + menuURL, 
+		url: '/api-get-bbs-menu-content?service=' + encodeURIComponent(service) + '&refresh=' + (refresh ? '1' : '0'),
 		async: true,
 		success: function(result){ 
 			$(innerBody).html(result);
@@ -733,11 +734,12 @@ function openBBSMenu(innerBody, title, menuURL)
 	});
 }
 
-function closeBBSMenu(innerBody, title, menuURL)
+function closeBBSMenu(innerBody, title, toolbar, service)
 {
-	$(innerBody).html('').hide(); 
+	$(innerBody).html('').hide();
+	$(toolbar).hide();
 	$(title).unbind('click').click(function () {
-		openBBSMenu(innerBody, title, menuURL);
+		openBBSMenu(innerBody, title, toolbar, service, false);
     });		
 }
 

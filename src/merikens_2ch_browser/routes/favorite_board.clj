@@ -115,11 +115,12 @@
                question-mark
                [:div {:style "float:right;"}
                 ; [:div {:id new-thread-bubble-id :class "bubble new-threads"} "?"]
-                [:div {:id new-thread-bubble-id :class "bubble new-posts"} [:span {:class "blink"} "?"]]]
+                [:div {:id new-thread-bubble-id :class "bubble new-threads"} [:span {:class "blink"} "?"]]
+                [:div {:id new-post-bubble-id :class "bubble new-posts"} [:span {:class "blink"} "?"]]]
 
                bubbles
                [:div {:style "float:right;"}
-                (if (and bubbles (> new-threads 0)) [:div {:id new-thread-bubble-id
+                (if (and bubbles (>= new-threads 0)) [:div {:id new-thread-bubble-id
                                                            :class (str "bubble "
                                                                         "new-threads "
                                                                         (if (> new-threads 0) "non-zero " ""))}

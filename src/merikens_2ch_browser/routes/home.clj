@@ -76,10 +76,16 @@
 
 
 (defn get-bbs-menu-content
-  [menu-url]
+  [service refresh]
+  (log :debug "get-bbs-menu-content:" service refresh)
   (html
     "<div>"
-    (let [body (:body (client/get menu-url (get-options-for-get-method menu-url)))]
+    (let [menu-url (get-menu-url service)
+          system-setting-name (str service "-menu")
+          body (if refresh
+                 (:body (client/get menu-url (get-options-for-get-method menu-url)))
+                 (db/get-system-setting system-setting-name))
+          _ (if refresh (db/update-system-setting system-setting-name body))]
       (for [item (split body #"\n")]
         (cond
           (re-find #"<B>(チャット|ツール類|他のサイト|おとなの時間|特別企画)</B>" item)
@@ -125,9 +131,10 @@
                 service      (server-to-service server)
                 display-name (str board-name " [" service "]")]
             ; (log :debug service server board)
-            (db/update-board-server service server board)
-            (if (nil? (:board-name (db/get-board-info service board)))
-              (db/update-board-name service server board board-name)) ; TODO: Use SETTINGS.TXT instead.
+            (when refresh
+              (db/update-board-server service server board)
+              (if (nil? (:board-name (db/get-board-info service board)))
+                (db/update-board-name service server board board-name))) ; TODO: Use SETTINGS.TXT instead.
             (list
               [:div.bbs-menu-item {:id item-id} "&nbsp;" (escape-html board-name)]
               (set-mousedown-event-handler (str "#" item-id)
@@ -137,13 +144,13 @@
     "</div>"))
 
 (defn api-get-bbs-menu-content
-  [menu-url]
+  [service refresh]
   (if (not (check-login))
     (html [:script "open('/login', '_self');"])
     (try
       (increment-http-request-count)
       (.setPriority (java.lang.Thread/currentThread) web-sever-thread-priority)
-      (let [result (get-bbs-menu-content menu-url)]
+      (let [result (get-bbs-menu-content service refresh)]
         (.setPriority (java.lang.Thread/currentThread) java.lang.Thread/NORM_PRIORITY)
         (decrement-http-request-count)
         result)
@@ -199,30 +206,6 @@
       (include-js-no-cache "/js/ZeroClipboard.js")
       (include-js-no-cache "/js/main.js")
       (include-js-no-cache "/js/clojurescript.js")
-
-      ; These boards are not listed in the menu.
-      (do
-        (db/update-board-name "2ch.net" "qb5.2ch.net" "saku2ch" "削除要請")
-        (db/update-board-name "2ch.net" "qb7.2ch.net" "operate2" "運用情報(金)")
-        (db/update-board-name "2ch.net" "peace.2ch.net" "sakhalin" "2ch開発室")
-        (db/update-board-name "2ch.net" "peace.2ch.net" "myanmar" "また挑戦。")
-        (db/update-board-name "2ch.net" "peace.2ch.net" "yangon" "また挑戦２。")
-        (db/update-board-name "2ch.net" "invisible.2ch.net" "invisible" "INVISIBLE")
-        nil)
-
-      ; These boards were (probably) deleted.
-      (do
-        (db/update-board-name "2ch.net" "hato.2ch.net" "sato" "忍者の里")
-        (db/update-board-name "2ch.net" "ipv6.2ch.net" "refuge" "避難所")
-        (db/update-board-name "2ch.net" "yuzuru.2ch.net" "mu" "幻の大陸")
-        nil)
-
-      ; Update board information in the background.
-      (do (future (doall (pmap #(try (get-bbs-menu-content %1) (catch Throwable _))
-                               (list "http://menu.2ch.sc/bbsmenu.html"
-                                     "http://menu.2ch.net/bbsmenu.html"
-                                     "http://open2ch.net/menu/pc_menu.html"))))
-        nil)
 
       [:div#panes
        [:div#left-panes-wrapper
@@ -303,31 +286,47 @@
 
               (= (first left-pane) :2ch-net)
               (list [:h2#bbs-menu-2ch-net-title.bbs-menu-title "板一覧 (2ch.net)"]
-                    [:div#bbs-menu-2ch-net.left-panes-inner-body.bbs-menu-inner-body]
+                    [:div#bbs-menu-2ch-net-toolbar.left-panes-inner-body.bbs-menu-tools
+                     (compact-javascript-button
+                       "更新"
+                       "openBBSMenu('#bbs-menu-2ch-net', '#bbs-menu-2ch-net-title', '#bbs-menu-2ch-net-toolbar', '2ch.net', true);")]
+                     [:div#bbs-menu-2ch-net.left-panes-inner-body.bbs-menu-inner-body]
                     (if (= (second left-pane) :open)
-                      [:script "openBBSMenu('#bbs-menu-2ch-net', '#bbs-menu-2ch-net-title', 'http://menu.2ch.net/bbsmenu.html');"]
-                      [:script "closeBBSMenu('#bbs-menu-2ch-net', '#bbs-menu-2ch-net-title', 'http://menu.2ch.net/bbsmenu.html');"]))
+                      [:script "openBBSMenu('#bbs-menu-2ch-net', '#bbs-menu-2ch-net-title', '#bbs-menu-2ch-net-toolbar',  '2ch.net', false);"]
+                      [:script "closeBBSMenu('#bbs-menu-2ch-net', '#bbs-menu-2ch-net-title', '#bbs-menu-2ch-net-toolbar',  '2ch.net');"]))
 
               (= (first left-pane) :2ch-sc)
               (list [:h2#bbs-menu-2ch-sc-title.bbs-menu-title "板一覧 (2ch.sc)"]
+                    [:div#bbs-menu-2ch-sc-toolbar.left-panes-inner-body.bbs-menu-tools
+                     (compact-javascript-button
+                       "更新"
+                       "openBBSMenu('#bbs-menu-2ch-sc', '#bbs-menu-2ch-sc-title', '#bbs-menu-2ch-sc-toolbar',  '2ch.sc', true);")]
                     [:div#bbs-menu-2ch-sc.left-panes-inner-body.bbs-menu-inner-body]
                     (if (= (second left-pane) :open)
-                      [:script "openBBSMenu('#bbs-menu-2ch-sc', '#bbs-menu-2ch-sc-title', 'http://menu.2ch.sc/bbsmenu.html');"]
-                      [:script "closeBBSMenu('#bbs-menu-2ch-sc', '#bbs-menu-2ch-sc-title', 'http://menu.2ch.sc/bbsmenu.html');"]))
+                      [:script "openBBSMenu('#bbs-menu-2ch-sc', '#bbs-menu-2ch-sc-title', '#bbs-menu-2ch-sc-toolbar',  '2ch.sc', false);"]
+                      [:script "closeBBSMenu('#bbs-menu-2ch-sc', '#bbs-menu-2ch-sc-title', '#bbs-menu-2ch-sc-toolbar',  '2ch.sc');"]))
 
               (= (first left-pane) :open2ch-net)
               (list [:h2#bbs-menu-open2ch-net-title.bbs-menu-title "板一覧 (open2ch.net)"]
+                    [:div#bbs-menu-open2ch-net-toolbar.left-panes-inner-body.bbs-menu-tools
+                     (compact-javascript-button
+                       "更新"
+                       "openBBSMenu('#bbs-menu-open2ch-net', '#bbs-menu-open2ch-net-title',  '#bbs-menu-open2ch-net-toolbar', 'open2ch.net', true);")]
                     [:div#bbs-menu-open2ch-net.left-panes-inner-body.bbs-menu-inner-body]
                     (if (= (second left-pane) :open)
-                      [:script "openBBSMenu('#bbs-menu-open2ch-net', '#bbs-menu-open2ch-net-title', 'http://open2ch.net/menu/pc_menu.html');"]
-                      [:script "closeBBSMenu('#bbs-menu-open2ch-net', '#bbs-menu-open2ch-net-title', 'http://open2ch.net/menu/pc_menu.html');"]))
+                      [:script "openBBSMenu('#bbs-menu-open2ch-net', '#bbs-menu-open2ch-net-title', '#bbs-menu-open2ch-net-toolbar',  'open2ch.net', false);"]
+                      [:script "closeBBSMenu('#bbs-menu-open2ch-net', '#bbs-menu-open2ch-net-title', '#bbs-menu-open2ch-net-toolbar',  'open2ch.net');"]))
 
               (= (first left-pane) :machi-bbs)
               (list [:h2#bbs-menu-machi-bbs-title.bbs-menu-title "板一覧(まちBBS)"]
+                    [:div#bbs-menu-machi-bbs-toolbar.left-panes-inner-body.bbs-menu-tools
+                     (compact-javascript-button
+                       "更新"
+                       "openBBSMenu('#bbs-menu-machi-bbs', '#bbs-menu-machi-bbs-title', '#bbs-menu-machi-bbs-toolbar', 'machi.to', true);")]
                     [:div#bbs-menu-machi-bbs.left-panes-inner-body.bbs-menu-inner-body]
                     (if (= (second left-pane) :open)
-                      [:script "openBBSMenu('#bbs-menu-machi-bbs', '#bbs-menu-machi-bbs-title', 'http://kita.jikkyo.org/cbm/cbm.cgi/m0.99/bbsmenu.html');"]
-                      [:script "closeBBSMenu('#bbs-menu-machi-bbs', '#bbs-menu-machi-bbs-title', 'http://kita.jikkyo.org/cbm/cbm.cgi/m0.99/bbsmenu.html');"]))
+                      [:script "openBBSMenu('#bbs-menu-machi-bbs', '#bbs-menu-machi-bbs-title', '#bbs-menu-machi-bbs-toolbar', 'machi.to', false);"]
+                      [:script "closeBBSMenu('#bbs-menu-machi-bbs', '#bbs-menu-machi-bbs-title', '#bbs-menu-machi-bbs-toolbar', 'machi.to');"]))
 
               (= (first left-pane) :image-download-info)
               (list [:h2#download-status-panel-title "自動画像ダウンロード"]
@@ -477,8 +476,8 @@
   (GET "/main/ZeroClipboard.swf" [] (noir.io/get-resource "/js/ZeroClipboard.swf"))
 
   (GET "/api-get-bbs-menu-content"
-       [menu-url]
-       (api-get-bbs-menu-content (trim menu-url)))
+       [service refresh]
+       (api-get-bbs-menu-content service (= refresh "1")))
 
   (GET "/api-get-server-info" [] (api-get-server-info)))
 
