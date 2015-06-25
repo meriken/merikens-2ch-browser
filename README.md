@@ -10,14 +10,15 @@ You will need [Leiningen][1] 2.0 or above installed.
 
 ## Building
 
-To build the application, run:
+To build the application on a Unix-like system, run:
 
     lein cljsbuild once
     lein uberjar
+    cp merikens-2ch-browser/merikens-2ch-browser.clj .
 
 ## Running
 
-To start an application server, run:
+To start an application server on a Unix-like system, run:
 
     java -jar merikens-2ch-browser/merikens-2ch-browser.jar
 
