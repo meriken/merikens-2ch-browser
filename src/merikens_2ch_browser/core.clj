@@ -115,6 +115,7 @@
   (.addShutdownHook (Runtime/getRuntime) (Thread. (fn [] (stop-app))))
 
   (log :info "Updating board information...")
+  (doall (pmap #(try (get-bbs-menu-content %1 true) (catch Throwable _)) ["2ch.sc" "2ch.net" "open2ch.net" "machi.to"]))
   (db/update-board-name "2ch.net" "qb5.2ch.net" "saku2ch" "íœ—v¿")
   (db/update-board-name "2ch.net" "qb7.2ch.net" "operate2" "‰^—pî•ñ(‹à)")
   (db/update-board-name "2ch.net" "peace.2ch.net" "sakhalin" "2chŠJ”­º")
@@ -124,7 +125,22 @@
   (db/update-board-name "2ch.net" "hato.2ch.net" "sato" "”EÒ‚Ì—¢")
   (db/update-board-name "2ch.net" "ipv6.2ch.net" "refuge" "”ğ“ïŠ")
   (db/update-board-name "2ch.net" "yuzuru.2ch.net" "mu" "Œ¶‚Ì‘å—¤")
-  (doall (pmap #(try (get-bbs-menu-content %1 true) (catch Throwable _)) ["2ch.sc" "2ch.net" "open2ch.net"]))
+  (do
+    (future
+      (do
+        (log :info "Board Menu Manager started.")
+        (Thread/sleep (* 60 60 1000))
+        (loop []
+          (try
+            (doall (pmap #(try (get-bbs-menu-content %1 true) (catch Throwable _)) ["2ch.sc" "2ch.net" "open2ch.net" "machi.to"]))
+            (Thread/sleep (* 60 60 1000))
+
+            (catch Throwable t
+              (log :error "Board Menu Manager: Unexpected exception:" (str t))
+              ; (print-stack-trace t)
+              ))
+          (if @server (recur)))
+        (log :info "Board Menu Manager stopped."))))
 
   (log :info app-name "started successfully."))
 

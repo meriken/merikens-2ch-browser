@@ -77,7 +77,7 @@
 
 (defn get-bbs-menu-content
   [service refresh]
-  (log :debug "get-bbs-menu-content:" service refresh)
+  ; (log :debug "get-bbs-menu-content:" service refresh)
   (html
     "<div>"
     (let [menu-url (get-menu-url service)
@@ -129,11 +129,13 @@
                 server       (nth (re-find #"http://([a-zA-Z0-9.]+)/([a-zA-Z0-9.]+)/?$" board-url) 1)
                 board        (nth (re-find #"http://([a-zA-Z0-9.]+)/([a-zA-Z0-9.]+)/?$" board-url) 2)
                 service      (server-to-service server)
-                display-name (str board-name " [" service "]")]
+                display-name (str board-name " [" service "]")
+                board-info   (db/get-board-info service board)]
             ; (log :debug service server board)
             (when refresh
-              (db/update-board-server service server board)
-              (if (nil? (:board-name (db/get-board-info service board)))
+              (when (or (nil? board-info) (not (= server (:server board-info))))
+                (db/update-board-server service server board))
+              (if (nil? (:board-name board-info))
                 (db/update-board-name service server board board-name))) ; TODO: Use SETTINGS.TXT instead.
             (list
               [:div.bbs-menu-item {:id item-id} "&nbsp;" (escape-html board-name)]
