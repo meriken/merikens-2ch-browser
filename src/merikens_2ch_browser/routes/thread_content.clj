@@ -650,16 +650,41 @@ The most recent version will (hopefully) be stored in the database."
           message       (convert-message-in-post-into-plain-text (second items))]
       ((:convert-raw-post-to-html context) index handle-or-cap tripcode cap email etc message special-color context))))
 
-(defn process-thread-in-html
+(def convert-post-from-read-cgi-in-potato-format-to-html
+  (fn [post context]
+    (let [ res-count (:res-count context)
+          thread-url (:thread-url context)
+          {:keys [service server board thread]} context
+          ; _ (log :debug "post:" post)
+          index (Integer. (second (re-find #"<div class=\"number\">([0-9]+)" post)))
+          name (clojure.string/replace (nth  (re-find #"<div class=\"name\">(<b>)?(.*?)</div>" post) 2)
+                                       #"</?a( [^>]+)?>"
+                                       "")
+          split-name    (clojure.string/split name #" *</?b> *")
+          special-color (second (re-find #"<font color=#([0-9A-Fa-f]+)>" (first split-name)))
+          handle-or-cap (remove-ng-words-from-cap (unescape-html-entities (remove-html-tags (nth split-name 0 ""))))
+          tripcode                                (unescape-html-entities (remove-html-tags (nth split-name 1 "")))
+          cap           (remove-ng-words-from-cap (unescape-html-entities (remove-html-tags (nth split-name 2 ""))))
+          email         (second (re-find #"<a href=\"mailto:([^\"]+)\"" post))
+          etc           (second (re-find #"<div class=\"date\">([^<]*)</div>" post))
+          message       (convert-message-in-post-into-plain-text (second (re-find #"<div class=\"message\">(.*)$" post)))
+          ]
+      ((:convert-raw-post-to-html context) index handle-or-cap tripcode cap email etc message nil context)
+      )))
+
+(defn process-thread-in-html-in-potato-format
   [html-body context]
-  (if (not (valid-thread-in-html? html-body))
+  (if (not (valid-thread-in-html-in-potato-format? html-body))
     (throw (Exception.)))
   (let [start-time (System/nanoTime)
         {:keys [service server board thread]} context
-        title (second (re-find #"<h1 [^>]+>(.*)</h1>" html-body))
+        ; _ (log :debug "html-body:" html-body)
+        title (second (re-find #"<h1 class=\"title\">(.*)\n?</h1>" html-body))
+        ; _ (log :debug "title:" title)
         title (if title (unescape-html-entities title) title)
-        thread-body (second (re-find #"(?s)<dl class=\"thread\"[^>]*>\n<dt>(.*)<br><br>\n</dl>" html-body))
-        posts (clojure.string/split thread-body #"<br><br>\n<dt>")
+        thread-body (second (re-find #"(?s)<div class=\"thread\"[^>]*>(.*)(</div>)*<div class=\"cLength\">" html-body))
+        ; _ (log :debug "thread-body:" thread-body)
+        posts (clojure.string/split thread-body #"</div><div class=\"post\"[^>]*>")
         res-count (count posts)
         ; _ (log :debug "res-count:" res-count)
         processed-posts (if (:count-posts context)
@@ -667,18 +692,50 @@ The most recent version will (hopefully) be stored in the database."
                           (doall
                             (cp/pmap
                               number-of-threads-for-thread-content
-                              convert-post-from-read-cgi-to-html
+                              convert-post-from-read-cgi-in-potato-format-to-html
                               posts
                               (repeat (-> context
-                                        (assoc :thread-title    title)
-                                        (assoc :res-count       res-count)
-                                        (assoc :display-post-fn (generate-display-post-fn context res-count)))))))]
+                                          (assoc :thread-title    title)
+                                          (assoc :res-count       res-count)
+                                          (assoc :display-post-fn (generate-display-post-fn context res-count)))))))]
     (db/update-thread-title service server board thread title)
     (db/update-thread-res-count service server board thread res-count)
     (if (re-find #"<div[^>]*>■ このスレッドは過去ログ倉庫に格納されています</div>" html-body)
       (db/mark-thread-as-archived service server board thread))
     (log :info (str "    Processed html page (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
     processed-posts))
+
+(defn process-thread-in-html
+  [html-body context]
+  (if (not (valid-thread-in-html? html-body))
+    (throw (Exception.)))
+  (if (valid-thread-in-html-in-potato-format? html-body)
+    (process-thread-in-html-in-potato-format html-body context)
+    (let [start-time (System/nanoTime)
+          {:keys [service server board thread]} context
+          title (second (re-find #"<h1 [^>]+>(.*)</h1>" html-body))
+          title (if title (unescape-html-entities title) title)
+          thread-body (second (re-find #"(?s)<dl class=\"thread\"[^>]*>\n<dt>(.*)<br><br>\n</dl>" html-body))
+          posts (clojure.string/split thread-body #"<br><br>\n<dt>")
+          res-count (count posts)
+          ; _ (log :debug "res-count:" res-count)
+          processed-posts (if (:count-posts context)
+                            (repeat res-count "")
+                            (doall
+                              (cp/pmap
+                                number-of-threads-for-thread-content
+                                convert-post-from-read-cgi-to-html
+                                posts
+                                (repeat (-> context
+                                            (assoc :thread-title    title)
+                                            (assoc :res-count       res-count)
+                                            (assoc :display-post-fn (generate-display-post-fn context res-count)))))))]
+      (db/update-thread-title service server board thread title)
+      (db/update-thread-res-count service server board thread res-count)
+      (if (re-find #"<div[^>]*>■ このスレッドは過去ログ倉庫に格納されています</div>" html-body)
+        (db/mark-thread-as-archived service server board thread))
+      (log :info (str "    Processed html page (" (format "%.0f" (* (- (System/nanoTime) start-time) 0.000001)) "ms)."))
+      processed-posts)))
 
 (defn get-posts-through-read-cgi
   [context]

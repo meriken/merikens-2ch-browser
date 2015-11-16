@@ -471,11 +471,16 @@
     (catch Throwable _
       false)))
 
+(defn valid-thread-in-html-in-potato-format?
+  [html-body]
+  (re-find #"<div class=\"thread\">" html-body))
+
 (defn valid-thread-in-html?
   [html-body]
-  (and (re-find #"<dl class=\"thread\"" html-body)
-       ; (not (re-find #"<img src=\"[^\"]+/bucket-full.png\">" html-body))
-       ))
+  (or (valid-thread-in-html-in-potato-format? html-body)
+      (and (re-find #"<dl class=\"thread\"" html-body)
+           ; (not (re-find #"<img src=\"[^\"]+/bucket-full.png\">" html-body))
+           )))
 
 
 (defn include-css-no-cache

@@ -83,7 +83,7 @@
    [ring/ring-core "1.3.1"]
    [ring/ring-jetty-adapter "1.3.1"]
    [http-kit "2.1.16"]
-   [org.immutant/web "2.x.incremental.373"] ; Added by Meriken
+   [org.immutant/web "2.1.1"] ; Added by Meriken
    [noir-exception "0.2.2"]
    [rm-hull/ring-gzip-middleware "0.1.7"] ; Added by Meriken
    ; [org.clojars.mikejs/ring-gzip-middleware "0.1.0-SNAPSHOT"] ; Added by Meriken
@@ -135,7 +135,7 @@
   :main merikens-2ch-browser.core ; Added by Meriken
   :uberjar-name "../merikens-2ch-browser/merikens-2ch-browser.jar" ; Added by Meriken
   :jvm-opts ["-server"
-             "-Xmx4g"
+             "-Xmx1g"
              "-XX:MaxPermSize=256m"
              "-XX:+UseG1GC"
              "-XX:MaxGCPauseMillis=1000"

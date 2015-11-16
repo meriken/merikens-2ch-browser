@@ -480,6 +480,7 @@
 
 (defn update-board-server
   [service server board]
+  ; (log :debug "update-board-server:" service server board)
   (transaction
     (if (< 0 (count (select board_info
                             (where {:board   board
