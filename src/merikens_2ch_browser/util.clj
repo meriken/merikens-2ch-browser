@@ -415,7 +415,7 @@
   [^String title]
   ; (log :debug "remove-ng-words-from-thread-title:" title)
   (if title
-    (clojure.string/replace title #"[ 　\t]*(\[転載禁止\]|(©|\(c\))(2ch\.net|bbspink\.com))+[ 　\t]*" "")
+    (clojure.string/replace title #"[ 　\t]*(\[無断転載禁止\]|\[転載禁止\]|(©|\(c\))(2ch\.net|bbspink\.com))+[ 　\t]*" "")
     ""))
 
 (defn remove-ng-words-from-cap
