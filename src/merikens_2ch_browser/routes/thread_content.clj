@@ -66,6 +66,9 @@
       ; Remove junky hyperlinks.
       (clojure.string/replace #"(?i)<a([^>]+)>(.+?)</a>" "$2")
 
+      ; Remove ad code
+      (clojure.string/replace #"(?i)<div class=\"banner\"([^>]+)>.*<div style=\"clear:both;\"></div>" "")
+
       ; Remove img tags for icons.
       (clojure.string/replace #"(?i)<img[^>]+src *= *\"http://([^>]*)\"([^>]*)>" #(str "sssp://" (second %1)))
 
@@ -716,7 +719,7 @@ The most recent version will (hopefully) be stored in the database."
           title (second (re-find #"<h1 [^>]+>(.*)</h1>" html-body))
           title (if title (unescape-html-entities title) title)
           thread-body (second (re-find #"(?s)<dl class=\"thread\"[^>]*>\n<dt>(.*)<br><br>\n</dl>" html-body))
-          posts (clojure.string/split thread-body #"<br><br>\n<dt>")
+          posts (clojure.string/split thread-body #"<dt>")
           res-count (count posts)
           ; _ (log :debug "res-count:" res-count)
           processed-posts (if (:count-posts context)
