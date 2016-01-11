@@ -717,9 +717,9 @@ The most recent version will (hopefully) be stored in the database."
           title (if title (unescape-html-entities title) title)
           thread-body (second (re-find #"(?s)<dl class=\"thread\"[^>]*>\n<dt>(.*)<br><br>\n</dl>" html-body))
           thread-body (clojure.string/replace thread-body #"<div id=\"js--banners--thread\"[^>]*></div>" "")
+          thread-body (clojure.string/replace thread-body #"(?s)<div class=\"banner\".*?</div><br><br>" "")
           posts (clojure.string/split thread-body #"<br><br>\n<dt>")
           res-count (count posts)
-          ; _ (log :debug "res-count:" res-count)
           processed-posts (if (:count-posts context)
                             (repeat res-count "")
                             (doall
