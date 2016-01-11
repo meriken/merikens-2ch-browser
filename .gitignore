@@ -26,3 +26,4 @@ pom.xml
 /.idea
 /*.iml
 /resources/public/js/clojurescript.js
+/projectFilesBackup
