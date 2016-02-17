@@ -67,6 +67,7 @@
    [:2ch-net             :closed]
    [:2ch-sc              :closed]
    [:open2ch-net         :closed]
+   [:ygg-io         :closed]
    ; [:machi-bbs          :closed]
    [:image-download-info :open]])
 
