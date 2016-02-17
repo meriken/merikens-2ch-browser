@@ -72,7 +72,8 @@
 (defn shingetsu-server?
   ^Boolean
 [^String server]
-  (boolean (re-find #"^shingetsu\.ygch\.net$" server)))
+  (boolean (or (re-find #"^ygg\.io$" server)
+               (re-find #"^shingetsu\.ygch\.net$" server))))
 
 (defn sc-url?
   ^Boolean
@@ -410,4 +411,5 @@
     "2ch.sc" "http://menu.2ch.sc/bbsmenu.html"
     "2ch.net" "http://menu.2ch.net/bbsmenu.html"
     "open2ch.net" "http://open2ch.net/menu/pc_menu.html"
-    "machi.to" "http://kita.jikkyo.org/cbm/cbm.cgi/m0.99/bbsmenu.htlm"))
+    "machi.to" "http://kita.jikkyo.org/cbm/cbm.cgi/m0.99/bbsmenu.htlm"
+    "ygg.io" "http://ygg.io/bbsmenu.html"))
