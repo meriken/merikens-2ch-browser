@@ -115,19 +115,19 @@
               "<div id=" items-id ">"
               ))
 
-          (re-find #"^<(A HREF|a href)=http://[a-z0-9.]+(2ch\.net|bbspink\.com|2ch\.sc|open2ch\.net|machi\.to)/[a-zA-Z0-9]+/( TARGET=_blank)?>" item)
+          (re-find #"^<(A HREF|a href)=http://[a-z0-9.]*(2ch\.net|bbspink\.com|2ch\.sc|open2ch\.net|machi\.to|ygg\.io)/[a-zA-Z0-9_]+/( TARGET=_blank)?>" item)
           (let [item-id (random-string 16)
                 board-url  (-> item
                              (clojure.string/replace #"^<(A HREF|a href)=" "")
                              (clojure.string/replace #"( TARGET=_blank)?>.*$" ""))
                 board-name (-> item
-                             (clojure.string/replace #"^<(A HREF|a href)=http://[a-z0-9.]+(2ch\.net|bbspink\.com|2ch\.sc|open2ch\.net|machi\.to)/[a-zA-Z0-9]+/( TARGET=_blank)?>" "")
+                             (clojure.string/replace #"^<(A HREF|a href)=http://[a-z0-9.]*(2ch\.net|bbspink\.com|2ch\.sc|open2ch\.net|machi\.to|ygg\.io)/[a-zA-Z0-9_]+/( TARGET=_blank)?>" "")
                              (clojure.string/replace #"</[Aa]>(<BR>|<br>)?$" ""))
                 ; site-name  (-> board-url
                 ;              (clojure.string/replace #"^http://[^.]+\." "")
                 ;              (clojure.string/replace #"/.*$" ""))
-                server       (nth (re-find #"http://([a-zA-Z0-9.]+)/([a-zA-Z0-9.]+)/?$" board-url) 1)
-                board        (nth (re-find #"http://([a-zA-Z0-9.]+)/([a-zA-Z0-9.]+)/?$" board-url) 2)
+                server       (nth (re-find #"http://([a-zA-Z0-9.]+)/([a-zA-Z0-9._]+)/?$" board-url) 1)
+                board        (nth (re-find #"http://([a-zA-Z0-9.]+)/([a-zA-Z0-9._]+)/?$" board-url) 2)
                 service      (server-to-service server)
                 display-name (str board-name " [" service "]")
                 board-info   (db/get-board-info service board)]
@@ -329,6 +329,17 @@
                     (if (= (second left-pane) :open)
                       [:script "openBBSMenu('#bbs-menu-machi-bbs', '#bbs-menu-machi-bbs-title', '#bbs-menu-machi-bbs-toolbar', 'machi.to', false);"]
                       [:script "closeBBSMenu('#bbs-menu-machi-bbs', '#bbs-menu-machi-bbs-title', '#bbs-menu-machi-bbs-toolbar', 'machi.to');"]))
+
+              (= (first left-pane) :ygg-io)
+              (list [:h2#bbs-menu-yggio-bbs-title.bbs-menu-title "板一覧(新月＠ゆぐちゃんねる)"]
+                    [:div#bbs-menu-yggio-bbs-toolbar.left-panes-inner-body.bbs-menu-tools
+                     (compact-javascript-button
+                       "更新"
+                       "openBBSMenu('#bbs-menu-yggio-bbs', '#bbs-menu-yggio-bbs-title', '#bbs-menu-yggio-bbs-toolbar', 'ygg.io', true);")]
+                    [:div#bbs-menu-yggio-bbs.left-panes-inner-body.bbs-menu-inner-body]
+                    (if (= (second left-pane) :open)
+                      [:script "openBBSMenu('#bbs-menu-yggio-bbs', '#bbs-menu-yggio-bbs-title', '#bbs-menu-yggio-bbs-toolbar', 'ygg.io', false);"]
+                      [:script "closeBBSMenu('#bbs-menu-yggio-bbs', '#bbs-menu-yggio-bbs-title', '#bbs-menu-yggio-bbs-toolbar', 'ygg.io');"]))
 
               (= (first left-pane) :image-download-info)
               (list [:h2#download-status-panel-title "自動画像ダウンロード"]
