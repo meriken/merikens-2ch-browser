@@ -115,7 +115,7 @@
   (.addShutdownHook (Runtime/getRuntime) (Thread. (fn [] (stop-app))))
 
   (log :info "Updating board information...")
-  (doall (pmap #(try (get-bbs-menu-content %1 true) (catch Throwable _)) ["2ch.sc" "2ch.net" "open2ch.net" "machi.to"]))
+  (doall (pmap #(try (get-bbs-menu-content %1 true) (catch Throwable _)) ["2ch.sc" "2ch.net" "open2ch.net" "machi.to" "ygg.ch"]))
   (db/update-board-name "2ch.net" "qb5.2ch.net" "saku2ch" "íœ—v¿")
   (db/update-board-name "2ch.net" "qb7.2ch.net" "operate2" "‰^—pî•ñ(‹à)")
   (db/update-board-name "2ch.net" "peace.2ch.net" "sakhalin" "2chŠJ”­º")

@@ -109,8 +109,14 @@
 (defn server-to-service
   ^String
 [^String server]
-  (if (or (= server "jbbs.livedoor.jp") (= server "jbbs.shitaraba.net"))
+  (cond
+    (or (= server "jbbs.livedoor.jp") (= server "jbbs.shitaraba.net"))
     "jbbs.shitaraba.net"
+
+    (or (= server "ygg.ch") (= server "ygg.io"))
+    "ygg.ch"
+
+    :else
     (clojure.string/replace server #"^[0-9a-z]+\." "")))
 
 (defn split-board-url
