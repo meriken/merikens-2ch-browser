@@ -132,7 +132,7 @@
         (Thread/sleep (* 60 60 1000))
         (loop []
           (try
-            (doall (pmap #(try (get-bbs-menu-content %1 true) (catch Throwable _)) ["2ch.sc" "2ch.net" "open2ch.net" "machi.to"]))
+            (doall (pmap #(try (get-bbs-menu-content %1 true) (catch Throwable _)) ["2ch.sc" "2ch.net" "open2ch.net" "machi.to" "ygg.ch"]))
             (Thread/sleep (* 60 60 1000))
 
             (catch Throwable t

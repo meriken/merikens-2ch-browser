@@ -65,8 +65,8 @@
    [:favorite-boards     :open]
    [:special-menu        :open]
    [:2ch-net             :closed]
-   [:2ch-sc              :closed]
    [:open2ch-net         :closed]
+   [:2ch-sc              :closed]
    [:ygg-ch         :closed]
    ; [:machi-bbs          :closed]
    [:image-download-info :open]])

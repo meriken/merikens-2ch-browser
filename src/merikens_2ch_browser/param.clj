@@ -30,7 +30,7 @@
 
 
 
-(def app-name "Meriken's 2ch Browser 0.1.26")
+(def app-name "Meriken's 2ch Browser 0.1.27")
 
 (def config-file-path "./merikens-2ch-browser.clj")
 
@@ -92,9 +92,10 @@
    [:server-info         :open]
    [:favorite-boards     :open]
    [:special-menu        :open]
+   [:ygg-ch              :closed]
    [:2ch-net             :closed]
-   [:2ch-sc              :closed]
    [:open2ch-net         :closed]
+   [:2ch-sc              :closed]
    ; [:machi-bbs          :open]
    [:image-download-info :open]])
 

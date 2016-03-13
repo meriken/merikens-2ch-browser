@@ -331,7 +331,7 @@
                       [:script "closeBBSMenu('#bbs-menu-machi-bbs', '#bbs-menu-machi-bbs-title', '#bbs-menu-machi-bbs-toolbar', 'machi.to');"]))
 
               (= (first left-pane) :ygg-ch)
-              (list [:h2#bbs-menu-ygg-ch-title.bbs-menu-title "板一覧(新月＠ゆぐちゃんねる)"]
+              (list [:h2#bbs-menu-ygg-ch-title.bbs-menu-title "板一覧(ゆぐちゃんねる)"]
                     [:div#bbs-menu-ygg-ch-toolbar.left-panes-inner-body.bbs-menu-tools
                      (compact-javascript-button
                        "更新"
