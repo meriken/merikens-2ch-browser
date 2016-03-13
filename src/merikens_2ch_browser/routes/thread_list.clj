@@ -486,6 +486,7 @@
           thread-url (create-thread-url (if current-server current-server server) board thread-no)
           board-name (str (:board-name board-info) (cond (= service "2ch.sc") "(sc)"
                                                          (= service "2ch.net") "(net)"
+                                                         (= service "ygg.ch") "(ygg)"
                                                          (= service "open2ch.net") "(op)"))
 
           created (-> thread-no
