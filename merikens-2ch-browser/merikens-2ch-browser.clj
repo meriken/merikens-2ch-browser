@@ -64,10 +64,10 @@
    [:server-info         :open]
    [:favorite-boards     :open]
    [:special-menu        :open]
+   [:ygg-ch         :closed]
    [:2ch-net             :closed]
    [:open2ch-net         :closed]
    [:2ch-sc              :closed]
-   [:ygg-ch         :closed]
    ; [:machi-bbs          :closed]
    [:image-download-info :open]])
 
